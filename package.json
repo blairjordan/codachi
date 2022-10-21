@@ -7,7 +7,7 @@
 		"url": "https://github.com/blairjordan/codachi"
 	},
 	"publisher": "pegleg",
-	"version": "1.0.5",
+	"version": "1.1.1",
 	"engines": {
 		"vscode": "^1.64.0"
 	},
