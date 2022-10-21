@@ -9,6 +9,7 @@ import {
   randomPetType,
   randomPetName,
   UserPet,
+  KeyStrokeVelocity,
 } from '../panel'
 
 const randomPet = (): UserPet =>
@@ -33,6 +34,7 @@ class PetPanel {
   private _userPet: UserPet
   private _extensionUri: vscode.Uri
   private _mediaPath: string
+  private _keystrokeVelocity = new KeyStrokeVelocity()
 
   public static currentPanel: PetPanel | undefined
 
@@ -56,19 +58,32 @@ class PetPanel {
     this._userPet = userPet
     this._extensionUri = extensionUri
     this._mediaPath = path.join(extensionPath, 'media')
+    this._keystrokeVelocity.startWatch()
   }
 
   onKeystroke(context: vscode.ExtensionContext) {
+    this._keystrokeVelocity.addKeyPress()
+
     this._userPet.xp = this._userPet.xp + 1
 
-    // Check level change every 10 keystrokes
+    // Keystroke checks every 10 keystrokes
     if (!(this.panel && this._userPet.xp % 10 === 0)) {
       return
+    }
+
+    // 💪 Buff
+    if (this._keystrokeVelocity.isThresholdExceeded()) {
+      this.panel.webview.postMessage({
+        command: 'buff-pet',
+        data: { userPet: this._userPet },
+      })
+      this._keystrokeVelocity.reset()
     }
 
     const previousLevel = this._userPet.level
     mutateLevel({ userPet: this._userPet })
 
+    // ⬆ Level up
     if (this._userPet.level !== previousLevel) {
       this.panel.webview.postMessage({
         command: 'update-pet',
@@ -204,6 +219,9 @@ class PetPanel {
         <div id="movement-container">
           <div id="transition-container">
             <img id="transition" nonce="${nonce}" />
+          </div>
+          <div id="buff-container">
+            <img id="buff" nonce="${nonce}" />
           </div>
           <div id="pet-container" >
             <img id="pet" nonce="${nonce}" />

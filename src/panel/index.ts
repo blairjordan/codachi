@@ -21,12 +21,14 @@ import {
   NextFrameFn,
   NextFrameFnReturn,
   Transforms,
-  PetAnimation,
+  Animation,
   PetLevel,
   State,
+  ContextTransform,
 } from './types'
 import { DOM } from './dom'
 import { state, initializeState, setState } from './state'
+import { KeyStrokeVelocity } from './keystroke-velocity'
 
 export {
   petTypes,
@@ -48,12 +50,14 @@ export {
   NextFrameFn,
   NextFrameFnReturn,
   Transforms,
-  PetAnimation,
+  Animation,
   PetLevel,
   State,
+  ContextTransform,
   initializeState,
   state,
   setState,
   transforms,
   DOM,
+  KeyStrokeVelocity,
 }

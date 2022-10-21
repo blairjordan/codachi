@@ -1,4 +1,4 @@
-export class Xp {
+export class KeyStrokeVelocity {
   _periods: number
   _msPerPeriod: number
   _intervalId: NodeJS.Timeout | undefined = undefined
@@ -7,18 +7,37 @@ export class Xp {
   _currentPeriodKeystrokes = 0
   _velocity = 0
   _multiplier = 0
+  _threshold = 0
 
   getMultipler() {
     return this._multiplier
   }
 
-  constructor(periods: number = 6, msPerPeriod: number = 10000) {
+  constructor(
+    periods: number = 6,
+    msPerPeriod: number = 10_000,
+    threshold: number = 5
+  ) {
     this._periods = periods
     this._msPerPeriod = msPerPeriod
+    this._threshold = threshold
+    return this
   }
 
-  onKeyPress() {
+  reset() {
+    this._velocity = 0
+    this._multiplier = 0
+  }
+
+  addKeyPress() {
+    if (!this._intervalId) {
+      return
+    }
     this._currentPeriodKeystrokes++
+  }
+
+  isThresholdExceeded() {
+    return this._multiplier >= this._threshold
   }
 
   startWatch() {

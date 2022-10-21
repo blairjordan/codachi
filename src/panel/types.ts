@@ -8,20 +8,31 @@ export type Gifs = { [name: string]: string }
 
 export type PetState = 'walking' | 'idle' | 'transition'
 
-export type PetAnimation = {
+// Special transformations which apply in certain context,
+// i.e., a buff animation's offset may change slightly based on
+// pet's direction
+export type ContextTransformProps = {
+  [transformProp: string]: string | number
+}
+
+export type ContextTransform = (contextInput: any) => ContextTransformProps
+
+export type Animation = {
   gif: string
-  width: number
-  height: number
+  width?: number
+  height?: number
   offset?: number
   speed?: number
   duration?: number
+  isFixedPosition?: boolean
+  contextTransforms?: ContextTransform[]
 }
 
 export type PetLevel = {
   xp: number
   defaultState: PetState
   animations: {
-    [name: string]: PetAnimation
+    [name: string]: Animation
   }
 }
 
@@ -37,6 +48,8 @@ export interface UserPetBaseProps {
   xp: number
   state: PetState
   isTransitionIn: boolean
+  isApplyBuff: boolean
+  buffCountdownTimerMs: number
 }
 
 export type PetType = 'monster1' | 'monster2' | 'unknown'
