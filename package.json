@@ -4,10 +4,10 @@
 	"description": "Your digital pet inside VSCode.",
 	"repository": {
 		"type": "github",
-		"url": "https://github.com/blairjordan/codachi-vscode"
+		"url": "https://github.com/blairjordan/codachi"
 	},
 	"publisher": "pegleg",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"engines": {
 		"vscode": "^1.64.0"
 	},
@@ -26,6 +26,7 @@
 		"friend",
 		"companion"
 	],
+  "license": "MIT",
 	"activationEvents": [
 		"*"
 	],
