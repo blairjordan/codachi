@@ -36,12 +36,6 @@ Your pet will gain XP as you code.
 
 <i>The Codachi panel must remain open for your pet to gain XP.</i>
 
-## Donate
-
-Support future development and original Codachi artworks by donating.
-
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=2H2JVTHJJA4XN)
-
 ## Screenshots
 
 ![Preview](https://github.com/blairjordan/codachi-vscode/raw/main/media/screenshot1.gif)
