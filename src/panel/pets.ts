@@ -309,6 +309,64 @@ export const petTypes = new Map<string, Pet>([
       ]),
     },
   ],
+  [
+    'monster5',
+    {
+      levels: new Map([
+        [0, egg],
+        [
+          1,
+          {
+            xp: 35,
+            defaultState: 'walking',
+            animations: {
+              transition,
+              walking: {
+                ...animationDefaults,
+                gif: 'monster5phase1',
+                width: 64,
+                height: 66,
+              },
+            },
+          },
+        ],
+        [
+          2,
+          {
+            xp: 150000,
+            defaultState: 'walking',
+            animations: {
+              transition,
+              walking: {
+                ...animationDefaults,
+                gif: 'monster5phase2',
+                speed: 3,
+                height: 100,
+                width: 100,
+              },
+            },
+          },
+        ],
+        [
+          3,
+          {
+            xp: 240000,
+            defaultState: 'walking',
+            animations: {
+              transition,
+              walking: {
+                ...animationDefaults,
+                gif: 'monster5phase3',
+                speed: 3,
+                height: 135,
+                width: 125,
+              },
+            },
+          },
+        ],
+      ]),
+    },
+  ],
 ])
 
 export const randomPetType = (): PetType =>
