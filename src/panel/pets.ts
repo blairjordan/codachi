@@ -25,6 +25,9 @@ export const gifs: Gifs = {
   monster4phase1: 'm4d1.gif',
   monster4phase2: 'm4d2.gif',
   monster4phase3: 'm4d3.gif',
+  monster5phase1: 'm5d1.gif',
+  monster5phase2: 'm5d2.gif',
+  monster5phase3: 'm5d3.gif',
 }
 
 export const petNames = [
@@ -326,6 +329,7 @@ export const petTypes = new Map<string, Pet>([
                 gif: 'monster5phase1',
                 width: 64,
                 height: 66,
+                speed: 2,
               },
             },
           },
