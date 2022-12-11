@@ -1,6 +1,6 @@
 # Codachi
 
-![codachi logo](https://github.com/blairjordan/codachi-vscode/raw/main/media/codachi-logo.png)
+![codachi logo](https://github.com/blairjordan/codachi/raw/main/media/codachi-logo.png)
 
 Adds cute monster pets to your workspace to encourage productivity.
 
