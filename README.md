@@ -7,6 +7,7 @@ Adds cute monster pets to your workspace to encourage productivity.
 These pets thrive off productivity. Write code to gain XP and level up!
 
 ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/pegleg.codachi)
+![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Pegleg.codachi)
 ![Codachi Twitter](https://img.shields.io/twitter/url?label=codachi_monster&style=social&url=https%3A%2F%2Ftwitter.com%2Fcodachi_monster)
 ![Codachi Stars](https://img.shields.io/github/stars/blairjordan/codachi?style=social)
 
