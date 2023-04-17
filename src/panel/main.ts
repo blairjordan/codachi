@@ -37,6 +37,7 @@ const tick = ({ userPet }: { userPet: UserPet }) => {
     direction: userPet.direction,
     speed: userPet.speed,
     offset: getPetAnimations({ userPet }).animation.offset || 0,
+    scale: userPet.scale,
   })
 
   userPet.leftPosition = leftPosition
@@ -47,7 +48,7 @@ const tick = ({ userPet }: { userPet: UserPet }) => {
   movementContainer.style.marginLeft = `${userPet.leftPosition}px`
 
   const petImageElement = dom.getPetImageSelector()
-  petImageElement.style.transform = `scaleX(${userPet.direction})`
+  petImageElement.style.transform = `scaleX(${userPet.direction}) scale(${userPet.scale})`
 
   if (userPet.isTransitionIn) {
     const { transition: animation } = getPetAnimations({
