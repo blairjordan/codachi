@@ -210,7 +210,6 @@ class PetPanel {
           </div>
         </div>
       </div>
-      
       <script nonce="${nonce}" src="${scriptUri}"></script>
       <script nonce="${nonce}">codachiApp.app({ basePetUri: '${basePetUri}', userPet: ${JSON.stringify(
       this.getUserPet()
@@ -248,6 +247,45 @@ export function activate(context: vscode.ExtensionContext) {
       panel.webview.postMessage({
         command: 'spawn-pet',
         data: { userPet: { ...userPet, isTransitionIn: false } },
+      })
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codachi.putToSleep', () => {
+      if (!petPanel.panel) {
+        // TODO: raise actual error message
+        vscode.window.showErrorMessage(
+          'You need to open Codachi before putting your pet to sleep!'
+        )
+        return
+      }
+
+      if (userPet.state === 'sleeping') {
+        vscode.window.showErrorMessage(`${userPet.name} is already asleep!`)
+        return
+      }
+
+      petPanel.panel.webview.postMessage({
+        command: 'put-to-sleep',
+        data: { userPet: { ...userPet, state: 'sleeping' } },
+      })
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('codachi.wakeUp', () => {
+      if (!petPanel.panel) {
+        // TODO: raise actual error message
+        vscode.window.showErrorMessage(
+          'You need to open Codachi before waking your pet up!'
+        )
+        return
+      }
+
+      petPanel.panel.webview.postMessage({
+        command: 'wake-up',
+        data: { userPet: { ...userPet, state: 'walking' } },
       })
     })
   )

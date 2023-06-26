@@ -41,6 +41,14 @@
 			{
 				"command": "codachi.spawnNewPet",
 				"title": "Codachi: New Pet"
+			},
+			{
+				"command": "codachi.putToSleep",
+				"title": "Codachi: Put to sleep"
+			},
+			{
+				"command": "codachi.wakeUp",
+				"title": "Codachi: Wake up"
 			}
 		]
 	},
