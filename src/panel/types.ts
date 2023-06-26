@@ -6,7 +6,7 @@ export type State = {
 
 export type Gifs = { [name: string]: string }
 
-export type PetState = 'walking' | 'idle' | 'transition'
+export type PetState = 'walking' | 'idle' | 'transition' | 'sleeping'
 
 export type PetAnimation = {
   gif: string

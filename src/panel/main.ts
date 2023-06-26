@@ -148,6 +148,16 @@ export const app = ({
           },
         })
         break
+      case 'wake-up':
+      case 'put-to-sleep':
+        addPetToPanel({
+          userPet: {
+            ...data.userPet,
+            leftPosition: state.userPet.leftPosition,
+            direction: state.userPet.direction,
+          },
+        })
+        break
     }
   })
 }

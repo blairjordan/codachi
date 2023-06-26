@@ -7,6 +7,12 @@ export const transforms: Transforms = {
       leftPosition: offset,
     }),
   },
+  sleeping: {
+    nextFrame: ({ direction, leftPosition }: NextFrameOpts) => ({
+      direction,
+      leftPosition,
+    }),
+  },
   walking: {
     nextFrame: ({
       containerWidth,
