@@ -70,13 +70,15 @@ const egg: PetLevel = {
     idle: {
       ...animationDefaults,
       gif: 'egg1',
+      width: 75,
+      height: 63,
     },
     transition: {
       ...animationDefaults,
       gif: 'dust1',
       offset: 6,
-      width: 100,
-      height: 100,
+      width: 64,
+      height: 64,
     },
   },
 }
