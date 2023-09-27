@@ -28,6 +28,9 @@ export const gifs: Gifs = {
   monster5phase1: 'm5d1.gif',
   monster5phase2: 'm5d2.gif',
   monster5phase3: 'm5d3.gif',
+  monster6phase1: 'm6d1.gif',
+  monster6phase2: 'm6d2.gif',
+  monster6phase3: 'm6d3.gif',
 }
 
 export const petNames = [
@@ -364,6 +367,65 @@ export const petTypes = new Map<string, Pet>([
                 speed: 3,
                 height: 135,
                 width: 125,
+              },
+            },
+          },
+        ],
+      ]),
+    },
+  ],
+  [
+    'monster6',
+    {
+      levels: new Map([
+        [0, egg],
+        [
+          1,
+          {
+            xp: 35,
+            defaultState: 'walking',
+            animations: {
+              transition,
+              walking: {
+                ...animationDefaults,
+                gif: 'monster6phase1',
+                width: 64,
+                height: 64,
+                speed: 2,
+              },
+            },
+          },
+        ],
+        [
+          2,
+          {
+            xp: 150000,
+            defaultState: 'walking',
+            animations: {
+              transition,
+              walking: {
+                ...animationDefaults,
+                gif: 'monster6phase2',
+                speed: 3,
+                height: 64,
+                width: 64,
+              },
+            },
+          },
+        ],
+        [
+          3,
+          {
+            xp: 240000,
+            defaultState: 'walking',
+            animations: {
+              transition,
+              walking: {
+                ...animationDefaults,
+                gif: 'monster6phase3',
+                speed: 2,
+                height: 64,
+                width: 64,
               },
             },
           },
