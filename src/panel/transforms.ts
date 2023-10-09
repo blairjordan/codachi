@@ -2,9 +2,10 @@ import { Transforms, NextFrameOpts, Direction } from './'
 
 export const transforms: Transforms = {
   idle: {
-    nextFrame: ({ direction, offset }: NextFrameOpts) => ({
+    nextFrame: ({ direction, offset, scale }: NextFrameOpts) => ({
       direction,
       leftPosition: offset,
+      scale,
     }),
   },
   walking: {
@@ -13,6 +14,7 @@ export const transforms: Transforms = {
       leftPosition: oldLeftPosition,
       direction: oldDirection,
       speed,
+      scale,
     }: // offset,
     NextFrameOpts) => {
       const direction =
@@ -30,6 +32,7 @@ export const transforms: Transforms = {
       return {
         direction,
         leftPosition,
+        scale,
       }
     },
   },

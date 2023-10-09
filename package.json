@@ -42,7 +42,19 @@
 				"command": "codachi.spawnNewPet",
 				"title": "Codachi: New Pet"
 			}
-		]
+		],
+    "configuration": [
+      {
+        "properties": {
+          "codachi.scaleFactor": {
+            "type": "number",
+            "default": 1.0,
+            "description": "The scale factor to apply to the pet",
+            "scope": "window"
+          }
+        }
+      }
+    ]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

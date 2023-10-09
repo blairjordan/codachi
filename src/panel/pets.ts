@@ -482,6 +482,7 @@ export const getPetAnimations = ({
   }
 }
 
+// TODO: Set scale (passed from settings)
 export const generatePet = ({ name, type }: UserPetArgs): UserPet => ({
   leftPosition: 0,
   speed: 0,
@@ -493,6 +494,7 @@ export const generatePet = ({ name, type }: UserPetArgs): UserPet => ({
   isTransitionIn: true,
   name,
   type,
+  scale: 1, // TODO: require scale (passed from settings)
 })
 
 export const getLevel = ({

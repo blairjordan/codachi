@@ -15,6 +15,7 @@ const randomPet = (): UserPet =>
   generatePet({
     type: randomPetType(),
     name: randomPetName(),
+    // TODO: Pass in scale
   })
 
 const getPetFromStorage = (storage: vscode.Memento): UserPet => {
@@ -46,16 +47,26 @@ class PetPanel {
 
   constructor({
     userPet,
-    extensionPath,
-    extensionUri,
+    context,
   }: {
     userPet: UserPet
-    extensionPath: string
-    extensionUri: vscode.Uri
+    context: vscode.ExtensionContext
   }) {
     this._userPet = userPet
-    this._extensionUri = extensionUri
-    this._mediaPath = path.join(extensionPath, 'media')
+    this._extensionUri = context.extensionUri
+    this._mediaPath = path.join(context.extensionPath, 'media')
+  }
+
+  updateScale(context: vscode.ExtensionContext, scale: number) {
+    if (!this.panel) {
+      return
+    }
+    this._userPet.scale = scale
+    this.panel.webview.postMessage({
+      command: 'update-pet',
+      data: { userPet: this._userPet },
+    })
+    context.globalState.update('pets', [this._userPet])
   }
 
   onKeystroke(context: vscode.ExtensionContext) {
@@ -227,8 +238,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   const petPanel = new PetPanel({
     userPet,
-    extensionUri: context.extensionUri,
-    extensionPath: context.extensionPath,
+    context,
   }) // Default pet is random
 
   vscode.commands.registerCommand('type', async (args) => {
@@ -288,13 +298,21 @@ export function activate(context: vscode.ExtensionContext) {
       async deserializeWebviewPanel(panel: vscode.WebviewPanel, _: any) {
         PetPanel.currentPanel = new PetPanel({
           userPet,
-          extensionUri: context.extensionUri,
-          extensionPath: context.extensionPath,
+          context,
         })
         petPanel.createPanel({ context, panel })
       },
     })
   }
+
+  vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration('codachi.scaleFactor')) {
+      const scaleFactor = vscode.workspace
+        .getConfiguration()
+        .get('codachi.scaleFactor', 1.0)
+      petPanel.updateScale(context, scaleFactor)
+    }
+  })
 }
 
 // this method is called when your extension is deactivated
