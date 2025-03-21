@@ -74,7 +74,7 @@ const egg: PetLevel = {
     transition: {
       ...animationDefaults,
       gif: 'dust1',
-      offset: 6,
+      offset: -13,
       width: 100,
       height: 100,
     },
@@ -85,7 +85,7 @@ const egg: PetLevel = {
 const transition: PetAnimation = {
   ...animationDefaults,
   gif: 'dust2',
-  offset: -85,
+  offset: -92,
   width: 280,
   height: 100,
 }
@@ -114,7 +114,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 150000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -129,7 +129,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 240000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -168,7 +168,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 40,
+            xp: 100000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -184,7 +184,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 50,
+            xp: 600000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -224,7 +224,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 599900,
             defaultState: 'walking',
             animations: {
               transition,
@@ -240,7 +240,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 600000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -280,7 +280,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 150000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -296,7 +296,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 240000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -337,7 +337,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 150000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -354,7 +354,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 240000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -465,10 +465,17 @@ export const mutateLevel = ({ userPet }: { userPet: UserPet }) => {
   }
 
   if (userPet.xp >= nextLevelFound.xp) {
+    // Record the previous level to detect actual level up
+    const previousLevel = userPet.level
+
     userPet.level += 1
     userPet.xp = 0
     userPet.state = nextLevelFound.defaultState
     userPet.speed = nextLevelFound.animations[userPet.state].speed || 0
-    userPet.isTransitionIn = true
+
+    // Only set transition flag when there's an actual level change
+    if (userPet.level !== previousLevel) {
+      userPet.isTransitionIn = true
+    }
   }
 }

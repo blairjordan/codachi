@@ -36,13 +36,59 @@
     "commands": [
       {
         "command": "codachi.showPanel",
-        "title": "Codachi: Show Panel"
+        "title": "Codachi: Show Panel",
+        "when": "codachi.displayMode == 'explorer'"
       },
       {
         "command": "codachi.spawnNewPet",
         "title": "Codachi: New Pet"
+      },
+      {
+        "command": "codachi.showExplorer",
+        "title": "Codachi: Show in Explorer",
+        "when": "codachi.displayMode == 'panel'"
+      },
+      {
+        "command": "codachi.respawnPet",
+        "title": "Respawn Pet",
+        "icon": "$(refresh)"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codachi-explorer",
+          "title": "Codachi",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "codachiExplorerView",
+          "name": "Codachi",
+          "when": "codachi.displayMode == 'explorer'"
+        }
+      ],
+      "codachi-explorer": [
+        {
+          "id": "codachiPanelView",
+          "name": "Codachi",
+          "when": "codachi.displayMode != 'explorer'"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "codachi.respawnPet",
+          "when": "view == codachiExplorerView || view == codachiPanelView",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": [
       {
         "properties": {
@@ -52,6 +98,20 @@
             "minimum": 0.5,
             "maximum": 1.5,
             "description": "The scale factor to apply to all pets (smaller values make pets smaller, larger values make them bigger)",
+            "scope": "window"
+          },
+          "codachi.displayMode": {
+            "type": "string",
+            "default": "panel",
+            "enum": [
+              "panel",
+              "explorer"
+            ],
+            "enumDescriptions": [
+              "Display pets in a panel (requires manual opening)",
+              "Display pets in the explorer sidebar (always visible)"
+            ],
+            "description": "Where to display your codachi pet",
             "scope": "window"
           }
         }

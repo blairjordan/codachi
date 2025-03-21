@@ -28,6 +28,9 @@ const dom = new DOM({
 
 const TICK_INTERVAL_MS = 100
 
+// Store played transitions in a local variable outside the tick function
+const playedTransitions: { [key: string]: boolean } = {}
+
 const tick = ({ userPet }: { userPet: UserPet }) => {
   const { leftPosition, direction } = transforms[userPet.state].nextFrame({
     containerWidth:
@@ -59,7 +62,23 @@ const tick = ({ userPet }: { userPet: UserPet }) => {
     petContainer.style.bottom = `${verticalAdjustment}px`
   }
 
+  // Handle transition animations with tracking to prevent repeating
   if (userPet.isTransitionIn) {
+    const transitionKey = `${userPet.level}-${userPet.state}`
+
+    // Skip if we've already played this specific transition
+    if (playedTransitions[transitionKey]) {
+      // For eggs (level 0, idle), preserve isTransitionIn but don't show animation again
+      if (userPet.level === 0 && userPet.state === 'idle') {
+        // Preserve the flag but skip animation
+        return
+      } else {
+        // For non-eggs, clear the flag
+        state.userPet.isTransitionIn = false
+        return
+      }
+    }
+
     const { transition: animation } = getPetAnimations({
       userPet,
     })
@@ -82,7 +101,14 @@ const tick = ({ userPet }: { userPet: UserPet }) => {
         selector: dom.getTransitionImageSelector(),
         animation,
       })
-      state.userPet.isTransitionIn = false
+
+      // Mark this transition as played
+      playedTransitions[transitionKey] = true
+
+      // For non-eggs, clear the transition flag
+      if (!(userPet.level === 0 && userPet.state === 'idle')) {
+        state.userPet.isTransitionIn = false
+      }
     }
   }
 }
@@ -141,7 +167,23 @@ export const addPetToPanel = async ({ userPet }: { userPet: UserPet }) => {
     userPet.speed = adjustSpeedForScale(userPet.originalSpeed, userPet.scale)
   }
 
+  // If this is a new egg (level 0), reset transition tracking
+  if (
+    userPet.level === 0 &&
+    userPet.state === 'idle' &&
+    userPet.isTransitionIn
+  ) {
+    // Clear history for new eggs to ensure transition plays
+    const eggKey = `0-idle`
+    delete playedTransitions[eggKey]
+  }
+
+  // NEVER modify isTransitionIn - respect whatever value was passed in
+  // This is critical for preserving egg state correctly
+
+  // Set the state with the pet as-is
   setState('userPet', userPet)
+
   startAnimation()
 
   // Give the transition a chance to play
@@ -171,25 +213,61 @@ export const app = ({
   setState('basePetUri', basePetUri)
 
   if (userPet) {
+    // Pass the pet object exactly as received
     addPetToPanel({ userPet })
   }
+
+  // Track document visibility changes to reset transitions when tab becomes visible
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      // Reset transitions when the tab becomes visible again
+      // This helps with the case where the user switches away and back
+      Object.keys(playedTransitions).forEach(
+        (key) => delete playedTransitions[key]
+      )
+    }
+  })
 
   // Handle messages sent from the extension to the webview
   window.addEventListener('message', (event): void => {
     const { command, data } = event.data // The data that the extension sent
     switch (command) {
       case 'spawn-pet':
+        // Clear played transitions when spawning a new pet
+        Object.keys(playedTransitions).forEach(
+          (key) => delete playedTransitions[key]
+        )
+
+        // For spawn-pet, always start fresh
         addPetToPanel({ userPet: data.userPet })
         break
 
       case 'update-pet':
-        addPetToPanel({
-          userPet: {
-            ...data.userPet,
-            leftPosition: state.userPet.leftPosition,
-            direction: state.userPet.direction,
-          },
-        })
+        // Check if this is a significant state change (like level or pet type)
+        const isNewPet =
+          !state.userPet ||
+          state.userPet.type !== data.userPet.type ||
+          state.userPet.name !== data.userPet.name
+
+        const isLevelChange =
+          state.userPet && state.userPet.level !== data.userPet.level
+
+        // Reset transition tracking for significant changes
+        if (isNewPet || isLevelChange || data.userPet.isTransitionIn) {
+          Object.keys(playedTransitions).forEach(
+            (key) => delete playedTransitions[key]
+          )
+        }
+
+        // Preserve position and direction but use all other properties from the update
+        // This is critical for preserving the egg/hatched state when switching views
+        const updatedPet = {
+          ...data.userPet,
+          leftPosition:
+            state.userPet?.leftPosition || data.userPet.leftPosition,
+          direction: state.userPet?.direction || data.userPet.direction,
+        }
+        addPetToPanel({ userPet: updatedPet })
         break
     }
   })
