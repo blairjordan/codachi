@@ -63,25 +63,28 @@ exports.DOM = DOM;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DOM = exports.transforms = exports.setState = exports.state = exports.initializeState = exports.Direction = exports.randomPetName = exports.randomPetType = exports.gifs = exports.mutateLevel = exports.generatePet = exports.getPetAnimations = exports.petTypes = void 0;
+exports.transforms = exports.state = exports.setState = exports.randomPetType = exports.randomPetName = exports.petTypes = exports.mutateLevel = exports.initializeState = exports.gifs = exports.getPetAnimations = exports.generatePet = exports.DOM = exports.Direction = exports.adjustSpeedForScale = void 0;
+const dom_1 = __webpack_require__(/*! ./dom */ "./src/panel/dom.ts");
+Object.defineProperty(exports, "DOM", ({ enumerable: true, get: function () { return dom_1.DOM; } }));
 const pets_1 = __webpack_require__(/*! ./pets */ "./src/panel/pets.ts");
-Object.defineProperty(exports, "petTypes", ({ enumerable: true, get: function () { return pets_1.petTypes; } }));
-Object.defineProperty(exports, "getPetAnimations", ({ enumerable: true, get: function () { return pets_1.getPetAnimations; } }));
 Object.defineProperty(exports, "generatePet", ({ enumerable: true, get: function () { return pets_1.generatePet; } }));
-Object.defineProperty(exports, "mutateLevel", ({ enumerable: true, get: function () { return pets_1.mutateLevel; } }));
+Object.defineProperty(exports, "getPetAnimations", ({ enumerable: true, get: function () { return pets_1.getPetAnimations; } }));
 Object.defineProperty(exports, "gifs", ({ enumerable: true, get: function () { return pets_1.gifs; } }));
-Object.defineProperty(exports, "randomPetType", ({ enumerable: true, get: function () { return pets_1.randomPetType; } }));
+Object.defineProperty(exports, "mutateLevel", ({ enumerable: true, get: function () { return pets_1.mutateLevel; } }));
+Object.defineProperty(exports, "petTypes", ({ enumerable: true, get: function () { return pets_1.petTypes; } }));
 Object.defineProperty(exports, "randomPetName", ({ enumerable: true, get: function () { return pets_1.randomPetName; } }));
+Object.defineProperty(exports, "randomPetType", ({ enumerable: true, get: function () { return pets_1.randomPetType; } }));
+const state_1 = __webpack_require__(/*! ./state */ "./src/panel/state.ts");
+Object.defineProperty(exports, "initializeState", ({ enumerable: true, get: function () { return state_1.initializeState; } }));
+Object.defineProperty(exports, "setState", ({ enumerable: true, get: function () { return state_1.setState; } }));
+Object.defineProperty(exports, "state", ({ enumerable: true, get: function () { return state_1.state; } }));
 const transforms_1 = __webpack_require__(/*! ./transforms */ "./src/panel/transforms.ts");
 Object.defineProperty(exports, "transforms", ({ enumerable: true, get: function () { return transforms_1.transforms; } }));
 const types_1 = __webpack_require__(/*! ./types */ "./src/panel/types.ts");
 Object.defineProperty(exports, "Direction", ({ enumerable: true, get: function () { return types_1.Direction; } }));
-const dom_1 = __webpack_require__(/*! ./dom */ "./src/panel/dom.ts");
-Object.defineProperty(exports, "DOM", ({ enumerable: true, get: function () { return dom_1.DOM; } }));
-const state_1 = __webpack_require__(/*! ./state */ "./src/panel/state.ts");
-Object.defineProperty(exports, "state", ({ enumerable: true, get: function () { return state_1.state; } }));
-Object.defineProperty(exports, "initializeState", ({ enumerable: true, get: function () { return state_1.initializeState; } }));
-Object.defineProperty(exports, "setState", ({ enumerable: true, get: function () { return state_1.setState; } }));
+// Function to adjust speed based on scale
+const adjustSpeedForScale = (originalSpeed, scale) => originalSpeed * (0.7 + 0.6 * scale);
+exports.adjustSpeedForScale = adjustSpeedForScale;
 
 
 /***/ }),
@@ -125,8 +128,9 @@ const tick = ({ userPet }) => {
             document.body.clientWidth,
         leftPosition: userPet.leftPosition,
         direction: userPet.direction,
-        speed: userPet.speed,
+        speed: (0, _1.adjustSpeedForScale)(userPet.speed, userPet.scale),
         offset: (0, _1.getPetAnimations)({ userPet }).animation.offset || 0,
+        scale: userPet.scale,
     });
     userPet.leftPosition = leftPosition;
     userPet.direction = direction;
@@ -134,7 +138,14 @@ const tick = ({ userPet }) => {
     const movementContainer = dom.getMovementSelector();
     movementContainer.style.marginLeft = `${userPet.leftPosition}px`;
     const petImageElement = dom.getPetImageSelector();
-    petImageElement.style.transform = `scaleX(${userPet.direction})`;
+    petImageElement.style.transform = `scaleX(${userPet.direction}) scale(${userPet.scale})`;
+    // Get the pet container and adjust its position to keep pet on the ground
+    const petContainer = document.getElementById('pet-container');
+    if (petContainer) {
+        const { animation } = (0, _1.getPetAnimations)({ userPet });
+        const verticalAdjustment = (animation.height * (userPet.scale - 1)) / 2;
+        petContainer.style.bottom = `${verticalAdjustment}px`;
+    }
     if (userPet.isTransitionIn) {
         const { transition: animation } = (0, _1.getPetAnimations)({
             userPet,
@@ -142,6 +153,12 @@ const tick = ({ userPet }) => {
         if (animation) {
             const transitionContainer = dom.getTransitionSelector();
             transitionContainer.style.marginLeft = `${userPet.leftPosition}px`;
+            // Also adjust transition container height
+            const transitionContainerElement = document.getElementById('transition-container');
+            if (transitionContainerElement) {
+                const verticalAdjustment = (animation.height * (userPet.scale - 1)) / 2;
+                transitionContainerElement.style.bottom = `${verticalAdjustment}px`;
+            }
             setImage({
                 container: dom.getTransitionSelector(),
                 selector: dom.getTransitionImageSelector(),
@@ -153,11 +170,19 @@ const tick = ({ userPet }) => {
 };
 const setImage = ({ container, selector, animation, }) => {
     var _a;
-    const { basePetUri } = _1.state;
+    const { basePetUri, userPet } = _1.state;
     selector.src = `${basePetUri}/${_1.gifs[animation.gif]}`;
     selector.width = animation.width;
     selector.style.minWidth = `${animation.width}px`;
     selector.height = animation.height;
+    // For pet image, we need to maintain scaleX for direction
+    if (selector === dom.getPetImageSelector()) {
+        selector.style.transform = `scaleX(${userPet.direction}) scale(${userPet.scale})`;
+    }
+    else {
+        // For transition images, just apply the scale
+        selector.style.transform = `scale(${userPet.scale})`;
+    }
     container.style.left = `${(_a = animation.offset) !== null && _a !== void 0 ? _a : 0}px`;
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -172,18 +197,31 @@ const startAnimation = () => {
     (0, _1.setState)('intervalId', intervalId);
 };
 const addPetToPanel = ({ userPet }) => __awaiter(void 0, void 0, void 0, function* () {
+    const { animation } = (0, _1.getPetAnimations)({
+        userPet,
+    });
+    // Store the original speed if it's not already set
+    if (!userPet.originalSpeed && animation.speed) {
+        userPet.originalSpeed = animation.speed;
+    }
+    if (userPet.originalSpeed) {
+        userPet.speed = (0, _1.adjustSpeedForScale)(userPet.originalSpeed, userPet.scale);
+    }
     (0, _1.setState)('userPet', userPet);
     startAnimation();
     // Give the transition a chance to play
     yield sleep(TICK_INTERVAL_MS * 2);
-    const { animation } = (0, _1.getPetAnimations)({
-        userPet,
-    });
     setImage({
         selector: dom.getPetImageSelector(),
         animation,
         container: dom.getMovementSelector(),
     });
+    // Apply vertical position adjustment for the pet container
+    const petContainer = document.getElementById('pet-container');
+    if (petContainer) {
+        const verticalAdjustment = (animation.height * (userPet.scale - 1)) / 2;
+        petContainer.style.bottom = `${verticalAdjustment}px`;
+    }
 });
 exports.addPetToPanel = addPetToPanel;
 const app = ({ userPet, basePetUri, }) => {
@@ -284,7 +322,7 @@ const egg = {
     },
 };
 // Generic evolution transition
-const transition = Object.assign(Object.assign({}, animationDefaults), { gif: 'dust2', offset: -80, width: 280, height: 100 });
+const transition = Object.assign(Object.assign({}, animationDefaults), { gif: 'dust2', offset: -85, width: 280, height: 100 });
 exports.petTypes = new Map([
     [
         'monster1',
@@ -298,29 +336,29 @@ exports.petTypes = new Map([
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster1phase1', speed: 4 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster1phase1', speed: 2 }),
                         },
                     },
                 ],
                 [
                     2,
                     {
-                        xp: 150000,
+                        xp: 50,
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster1phase2', speed: 3 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster1phase2', speed: 2 }),
                         },
                     },
                 ],
                 [
                     3,
                     {
-                        xp: 240000,
+                        xp: 60,
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster1phase3', speed: 3 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster1phase3', speed: 2 }),
                         },
                     },
                 ],
@@ -339,29 +377,29 @@ exports.petTypes = new Map([
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster2phase1', width: 64, speed: 3 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster2phase1', width: 64, speed: 2 }),
                         },
                     },
                 ],
                 [
                     2,
                     {
-                        xp: 100000,
+                        xp: 40,
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster2phase2', width: 64, speed: 3 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster2phase2', width: 64, speed: 2 }),
                         },
                     },
                 ],
                 [
                     3,
                     {
-                        xp: 600000,
+                        xp: 50,
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster2phase3', width: 64, speed: 3 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster2phase3', width: 64, speed: 2 }),
                         },
                     },
                 ],
@@ -387,7 +425,7 @@ exports.petTypes = new Map([
                 [
                     2,
                     {
-                        xp: 599900,
+                        xp: 50,
                         defaultState: 'walking',
                         animations: {
                             transition,
@@ -398,7 +436,7 @@ exports.petTypes = new Map([
                 [
                     3,
                     {
-                        xp: 600000,
+                        xp: 60,
                         defaultState: 'walking',
                         animations: {
                             transition,
@@ -421,29 +459,29 @@ exports.petTypes = new Map([
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster4phase1', width: 64, speed: 3 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster4phase1', width: 64, speed: 2 }),
                         },
                     },
                 ],
                 [
                     2,
                     {
-                        xp: 150000,
+                        xp: 50,
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster4phase2', width: 64, speed: 3 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster4phase2', width: 64, speed: 2 }),
                         },
                     },
                 ],
                 [
                     3,
                     {
-                        xp: 240000,
+                        xp: 60,
                         defaultState: 'walking',
                         animations: {
                             transition,
-                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster4phase3', width: 64, speed: 4 }),
+                            walking: Object.assign(Object.assign({}, animationDefaults), { gif: 'monster4phase3', width: 64, speed: 3 }),
                         },
                     },
                 ],
@@ -572,6 +610,7 @@ const generatePet = ({ name, type }) => ({
     isTransitionIn: true,
     name,
     type,
+    scale: 1,
 });
 exports.generatePet = generatePet;
 const getLevel = ({ petType, level, }) => {
@@ -636,13 +675,14 @@ exports.transforms = void 0;
 const _1 = __webpack_require__(/*! ./ */ "./src/panel/index.ts");
 exports.transforms = {
     idle: {
-        nextFrame: ({ direction, offset }) => ({
+        nextFrame: ({ direction, offset, scale }) => ({
             direction,
             leftPosition: offset,
+            scale,
         }),
     },
     walking: {
-        nextFrame: ({ containerWidth, leftPosition: oldLeftPosition, direction: oldDirection, speed, }) => {
+        nextFrame: ({ containerWidth, leftPosition: oldLeftPosition, direction: oldDirection, speed, scale, }) => {
             const direction = oldLeftPosition >= containerWidth - speed - 150
                 ? _1.Direction.left
                 : oldLeftPosition <= 0 + speed
@@ -654,6 +694,7 @@ exports.transforms = {
             return {
                 direction,
                 leftPosition,
+                scale,
             };
         },
     },

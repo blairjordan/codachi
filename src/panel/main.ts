@@ -1,13 +1,14 @@
 import {
+  DOM,
+  PetAnimation,
   UserPet,
-  setState,
+  adjustSpeedForScale,
+  generatePet,
   getPetAnimations,
   gifs,
-  generatePet,
-  transforms,
-  DOM,
+  setState,
   state,
-  PetAnimation,
+  transforms,
 } from './'
 import { initializeState } from './state'
 
@@ -35,7 +36,7 @@ const tick = ({ userPet }: { userPet: UserPet }) => {
       document.body.clientWidth,
     leftPosition: userPet.leftPosition,
     direction: userPet.direction,
-    speed: userPet.speed,
+    speed: adjustSpeedForScale(userPet.speed, userPet.scale),
     offset: getPetAnimations({ userPet }).animation.offset || 0,
     scale: userPet.scale,
   })
@@ -50,6 +51,14 @@ const tick = ({ userPet }: { userPet: UserPet }) => {
   const petImageElement = dom.getPetImageSelector()
   petImageElement.style.transform = `scaleX(${userPet.direction}) scale(${userPet.scale})`
 
+  // Get the pet container and adjust its position to keep pet on the ground
+  const petContainer = document.getElementById('pet-container')
+  if (petContainer) {
+    const { animation } = getPetAnimations({ userPet })
+    const verticalAdjustment = (animation.height * (userPet.scale - 1)) / 2
+    petContainer.style.bottom = `${verticalAdjustment}px`
+  }
+
   if (userPet.isTransitionIn) {
     const { transition: animation } = getPetAnimations({
       userPet,
@@ -58,6 +67,15 @@ const tick = ({ userPet }: { userPet: UserPet }) => {
     if (animation) {
       const transitionContainer = dom.getTransitionSelector()
       transitionContainer.style.marginLeft = `${userPet.leftPosition}px`
+
+      // Also adjust transition container height
+      const transitionContainerElement = document.getElementById(
+        'transition-container'
+      )
+      if (transitionContainerElement) {
+        const verticalAdjustment = (animation.height * (userPet.scale - 1)) / 2
+        transitionContainerElement.style.bottom = `${verticalAdjustment}px`
+      }
 
       setImage({
         container: dom.getTransitionSelector(),
@@ -78,12 +96,20 @@ const setImage = ({
   selector: HTMLImageElement
   animation: PetAnimation
 }) => {
-  const { basePetUri } = state
+  const { basePetUri, userPet } = state
 
   selector.src = `${basePetUri}/${gifs[animation.gif]}`
   selector.width = animation.width
   selector.style.minWidth = `${animation.width}px`
   selector.height = animation.height
+
+  // For pet image, we need to maintain scaleX for direction
+  if (selector === dom.getPetImageSelector()) {
+    selector.style.transform = `scaleX(${userPet.direction}) scale(${userPet.scale})`
+  } else {
+    // For transition images, just apply the scale
+    selector.style.transform = `scale(${userPet.scale})`
+  }
 
   container.style.left = `${animation.offset ?? 0}px`
 }
@@ -102,21 +128,37 @@ const startAnimation = () => {
 }
 
 export const addPetToPanel = async ({ userPet }: { userPet: UserPet }) => {
+  const { animation } = getPetAnimations({
+    userPet,
+  })
+
+  // Store the original speed if it's not already set
+  if (!userPet.originalSpeed && animation.speed) {
+    userPet.originalSpeed = animation.speed
+  }
+
+  if (userPet.originalSpeed) {
+    userPet.speed = adjustSpeedForScale(userPet.originalSpeed, userPet.scale)
+  }
+
   setState('userPet', userPet)
   startAnimation()
 
   // Give the transition a chance to play
   await sleep(TICK_INTERVAL_MS * 2)
 
-  const { animation } = getPetAnimations({
-    userPet,
-  })
-
   setImage({
     selector: dom.getPetImageSelector(),
     animation,
     container: dom.getMovementSelector(),
   })
+
+  // Apply vertical position adjustment for the pet container
+  const petContainer = document.getElementById('pet-container')
+  if (petContainer) {
+    const verticalAdjustment = (animation.height * (userPet.scale - 1)) / 2
+    petContainer.style.bottom = `${verticalAdjustment}px`
+  }
 }
 
 export const app = ({
