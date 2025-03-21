@@ -1,22 +1,35 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import path = require('path')
-import * as vscode from 'vscode'
 import * as crypto from 'crypto'
+import * as vscode from 'vscode'
 import {
+  adjustSpeedForScale,
   generatePet,
   mutateLevel,
-  randomPetType,
   randomPetName,
+  randomPetType,
   UserPet,
 } from '../panel'
 
-const randomPet = (): UserPet =>
-  generatePet({
+const randomPet = (): UserPet => {
+  const scaleFactor = vscode.workspace
+    .getConfiguration()
+    .get('codachi.scaleFactor', 1.0)
+
+  const pet = generatePet({
     type: randomPetType(),
     name: randomPetName(),
-    // TODO: Pass in scale
   })
+
+  pet.scale = scaleFactor
+
+  if (pet.speed) {
+    pet.originalSpeed = pet.speed
+  }
+
+  return pet
+}
 
 const getPetFromStorage = (storage: vscode.Memento): UserPet => {
   const storedPets = storage.get('pets')
@@ -25,6 +38,11 @@ const getPetFromStorage = (storage: vscode.Memento): UserPet => {
     storage.update('pets', [userPet])
   } else {
     userPet = (storedPets as UserPet[])[0] // Only supporting a single pet for now ...
+
+    // Ensure originalSpeed is set for stored pets
+    if (!userPet.originalSpeed && userPet.speed) {
+      userPet.originalSpeed = userPet.speed
+    }
   }
   return userPet
 }
@@ -62,6 +80,14 @@ class PetPanel {
       return
     }
     this._userPet.scale = scale
+
+    if (this._userPet.originalSpeed) {
+      this._userPet.speed = adjustSpeedForScale(
+        this._userPet.originalSpeed,
+        scale
+      )
+    }
+
     this.panel.webview.postMessage({
       command: 'update-pet',
       data: { userPet: this._userPet },
@@ -236,10 +262,16 @@ class PetPanel {
 export function activate(context: vscode.ExtensionContext) {
   const userPet = getPetFromStorage(context.globalState)
 
+  // Apply current scale factor to existing pet
+  const scaleFactor = vscode.workspace
+    .getConfiguration()
+    .get('codachi.scaleFactor', 1.0)
+  userPet.scale = scaleFactor
+
   const petPanel = new PetPanel({
     userPet,
     context,
-  }) // Default pet is random
+  })
 
   vscode.commands.registerCommand('type', async (args) => {
     petPanel.onKeystroke(context)

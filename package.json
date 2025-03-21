@@ -1,87 +1,89 @@
 {
-	"name": "codachi",
-	"displayName": "codachi",
-	"description": "Your digital pet inside VSCode.",
-	"repository": {
-		"type": "github",
-		"url": "https://github.com/blairjordan/codachi"
-	},
-	"publisher": "pegleg",
-	"version": "1.2.2",
-	"engines": {
-		"vscode": "^1.64.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"keywords": [
-		"pet",
-		"monster",
-		"pokemon",
-		"tamagotchi",
-		"creature",
-		"motivation",
-		"productivity",
-		"animal",
-		"friend",
-		"companion"
-	],
+  "name": "codachi",
+  "displayName": "codachi",
+  "description": "Your digital pet inside VSCode.",
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/blairjordan/codachi"
+  },
+  "publisher": "pegleg",
+  "version": "1.2.2",
+  "engines": {
+    "vscode": "^1.64.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "pet",
+    "monster",
+    "pokemon",
+    "tamagotchi",
+    "creature",
+    "motivation",
+    "productivity",
+    "animal",
+    "friend",
+    "companion"
+  ],
   "license": "MIT",
-	"activationEvents": [
-		"*"
-	],
-	"icon": "icon.png",
-	"main": "./out/extension/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "codachi.showPanel",
-				"title": "Codachi: Show Panel"
-			},
-			{
-				"command": "codachi.spawnNewPet",
-				"title": "Codachi: New Pet"
-			}
-		],
+  "activationEvents": [
+    "*"
+  ],
+  "icon": "icon.png",
+  "main": "./out/extension/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codachi.showPanel",
+        "title": "Codachi: Show Panel"
+      },
+      {
+        "command": "codachi.spawnNewPet",
+        "title": "Codachi: New Pet"
+      }
+    ],
     "configuration": [
       {
         "properties": {
           "codachi.scaleFactor": {
             "type": "number",
-            "default": 1.0,
-            "description": "The scale factor to apply to the pet",
+            "default": 1,
+            "minimum": 0.5,
+            "maximum": 1.5,
+            "description": "The scale factor to apply to all pets (smaller values make pets smaller, larger values make them bigger)",
             "scope": "window"
           }
         }
       }
     ]
-	},
-	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"compile:panel": "webpack",
-		"compile:extension": "tsc -p ./tsconfig.extension.json",
-		"compile": "npm run compile:panel && npm run compile:extension",
-		"watch": "tsc -watch -p ./tsconfig.extension.json",
-		"pretest": "npm run compile && npm run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/extension/test/runTest.js"
-	},
-	"devDependencies": {
-		"@types/glob": "^7.2.0",
-		"@types/mocha": "^9.1.0",
-		"@types/node": "14.x",
-		"@types/vscode": "^1.64.0",
-		"@typescript-eslint/eslint-plugin": "^5.12.1",
-		"@typescript-eslint/parser": "^5.12.1",
-		"@vscode/test-electron": "^2.1.2",
-		"eslint": "^8.9.0",
-		"glob": "^7.2.0",
-		"mocha": "^9.2.1",
-		"typescript": "^4.5.5",
-		"webpack": "^5.70.0",
-		"webpack-cli": "^4.9.2"
-	},
-	"dependencies": {
-		"ts-loader": "^9.2.8"
-	}
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile:panel": "webpack",
+    "compile:extension": "tsc -p ./tsconfig.extension.json",
+    "compile": "npm run compile:panel && npm run compile:extension",
+    "watch": "tsc -watch -p ./tsconfig.extension.json",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/extension/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.2.0",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "14.x",
+    "@types/vscode": "^1.64.0",
+    "@typescript-eslint/eslint-plugin": "^5.12.1",
+    "@typescript-eslint/parser": "^5.12.1",
+    "@vscode/test-electron": "^2.1.2",
+    "eslint": "^8.9.0",
+    "glob": "^7.2.0",
+    "mocha": "^9.2.1",
+    "typescript": "^4.5.5",
+    "webpack": "^5.70.0",
+    "webpack-cli": "^4.9.2"
+  },
+  "dependencies": {
+    "ts-loader": "^9.2.8"
+  }
 }

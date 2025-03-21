@@ -32,6 +32,7 @@ export type Pet = {
 export interface UserPetBaseProps {
   leftPosition: number
   speed: number
+  originalSpeed?: number
   direction: number
   level: number
   xp: number
