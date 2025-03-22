@@ -1,31 +1,31 @@
 {
-	"name": "codachi",
-	"displayName": "codachi",
-	"description": "Your digital pet inside VSCode.",
-	"repository": {
-		"type": "github",
-		"url": "https://github.com/blairjordan/codachi"
-	},
-	"publisher": "pegleg",
-	"version": "1.3.0",
-	"engines": {
-		"vscode": "^1.64.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"keywords": [
-		"pet",
-		"monster",
-		"pokemon",
-		"tamagotchi",
-		"creature",
-		"motivation",
-		"productivity",
-		"animal",
-		"friend",
-		"companion"
-	],
+  "name": "codachi",
+  "displayName": "codachi",
+  "description": "Your digital pet inside VSCode.",
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/blairjordan/codachi"
+  },
+  "publisher": "pegleg",
+  "version": "1.4.0",
+  "engines": {
+    "vscode": "^1.64.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "pet",
+    "monster",
+    "pokemon",
+    "tamagotchi",
+    "creature",
+    "motivation",
+    "productivity",
+    "animal",
+    "friend",
+    "companion"
+  ],
   "license": "MIT",
   "activationEvents": [
     "*"

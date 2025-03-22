@@ -77,7 +77,7 @@ const egg: PetLevel = {
     transition: {
       ...animationDefaults,
       gif: 'dust1',
-      offset: 6,
+      offset: -13,
       width: 100,
       height: 100,
     },
@@ -88,7 +88,7 @@ const egg: PetLevel = {
 const transition: PetAnimation = {
   ...animationDefaults,
   gif: 'dust2',
-  offset: -85,
+  offset: -95,
   width: 280,
   height: 100,
 }
@@ -399,7 +399,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 150000,
+            xp: 50,
             defaultState: 'walking',
             animations: {
               transition,
@@ -416,7 +416,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 240000,
+            xp: 60,
             defaultState: 'walking',
             animations: {
               transition,
