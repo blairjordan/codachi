@@ -32,11 +32,13 @@ export type Pet = {
 export interface UserPetBaseProps {
   leftPosition: number
   speed: number
+  originalSpeed?: number
   direction: number
   level: number
   xp: number
   state: PetState
   isTransitionIn: boolean
+  scale: number
 }
 
 export type PetType = 'monster1' | 'monster2' | 'unknown'
@@ -59,6 +61,7 @@ export type NextFrameOpts = {
   direction: number
   speed: number
   offset: number
+  scale: number
 }
 
 export type NextFrameFnReturn = {
