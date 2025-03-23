@@ -1,12 +1,12 @@
 import {
-  PetType,
-  Pet,
-  UserPetArgs,
   Direction,
-  PetAnimation,
-  UserPet,
-  PetLevel,
   Gifs,
+  Pet,
+  PetAnimation,
+  PetLevel,
+  PetType,
+  UserPet,
+  UserPetArgs,
 } from './'
 
 export const gifs: Gifs = {
@@ -77,7 +77,7 @@ const egg: PetLevel = {
     transition: {
       ...animationDefaults,
       gif: 'dust1',
-      offset: 6,
+      offset: -13,
       width: 100,
       height: 100,
     },
@@ -88,7 +88,7 @@ const egg: PetLevel = {
 const transition: PetAnimation = {
   ...animationDefaults,
   gif: 'dust2',
-  offset: -80,
+  offset: -95,
   width: 280,
   height: 100,
 }
@@ -109,7 +109,7 @@ export const petTypes = new Map<string, Pet>([
               walking: {
                 ...animationDefaults,
                 gif: 'monster1phase1',
-                speed: 4,
+                speed: 2,
               },
             },
           },
@@ -117,14 +117,14 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 150000,
+            xp: 50,
             defaultState: 'walking',
             animations: {
               transition,
               walking: {
                 ...animationDefaults,
                 gif: 'monster1phase2',
-                speed: 3,
+                speed: 2,
               },
             },
           },
@@ -132,14 +132,14 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 240000,
+            xp: 60,
             defaultState: 'walking',
             animations: {
               transition,
               walking: {
                 ...animationDefaults,
                 gif: 'monster1phase3',
-                speed: 3,
+                speed: 2,
               },
             },
           },
@@ -163,7 +163,7 @@ export const petTypes = new Map<string, Pet>([
                 ...animationDefaults,
                 gif: 'monster2phase1',
                 width: 64,
-                speed: 3,
+                speed: 2,
               },
             },
           },
@@ -171,7 +171,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 100000,
+            xp: 40,
             defaultState: 'walking',
             animations: {
               transition,
@@ -179,7 +179,7 @@ export const petTypes = new Map<string, Pet>([
                 ...animationDefaults,
                 gif: 'monster2phase2',
                 width: 64,
-                speed: 3,
+                speed: 2,
               },
             },
           },
@@ -187,7 +187,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 600000,
+            xp: 50,
             defaultState: 'walking',
             animations: {
               transition,
@@ -195,7 +195,7 @@ export const petTypes = new Map<string, Pet>([
                 ...animationDefaults,
                 gif: 'monster2phase3',
                 width: 64,
-                speed: 3,
+                speed: 2,
               },
             },
           },
@@ -227,7 +227,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 599900,
+            xp: 50,
             defaultState: 'walking',
             animations: {
               transition,
@@ -243,7 +243,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 600000,
+            xp: 60,
             defaultState: 'walking',
             animations: {
               transition,
@@ -275,7 +275,7 @@ export const petTypes = new Map<string, Pet>([
                 ...animationDefaults,
                 gif: 'monster4phase1',
                 width: 64,
-                speed: 3,
+                speed: 2,
               },
             },
           },
@@ -283,7 +283,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 150000,
+            xp: 50,
             defaultState: 'walking',
             animations: {
               transition,
@@ -291,7 +291,7 @@ export const petTypes = new Map<string, Pet>([
                 ...animationDefaults,
                 gif: 'monster4phase2',
                 width: 64,
-                speed: 3,
+                speed: 2,
               },
             },
           },
@@ -299,7 +299,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 240000,
+            xp: 60,
             defaultState: 'walking',
             animations: {
               transition,
@@ -307,7 +307,7 @@ export const petTypes = new Map<string, Pet>([
                 ...animationDefaults,
                 gif: 'monster4phase3',
                 width: 64,
-                speed: 4,
+                speed: 3,
               },
             },
           },
@@ -340,14 +340,14 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 150000,
+            xp: 50,
             defaultState: 'walking',
             animations: {
               transition,
               walking: {
                 ...animationDefaults,
                 gif: 'monster5phase2',
-                speed: 3,
+                speed: 2,
                 height: 100,
                 width: 100,
               },
@@ -357,14 +357,14 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 240000,
+            xp: 60,
             defaultState: 'walking',
             animations: {
               transition,
               walking: {
                 ...animationDefaults,
                 gif: 'monster5phase3',
-                speed: 3,
+                speed: 2,
                 height: 135,
                 width: 125,
               },
@@ -399,7 +399,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 150000,
+            xp: 50,
             defaultState: 'walking',
             animations: {
               transition,
@@ -416,7 +416,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 240000,
+            xp: 60,
             defaultState: 'walking',
             animations: {
               transition,
@@ -493,6 +493,7 @@ export const generatePet = ({ name, type }: UserPetArgs): UserPet => ({
   isTransitionIn: true,
   name,
   type,
+  scale: 1,
 })
 
 export const getLevel = ({
