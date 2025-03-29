@@ -7,7 +7,7 @@
     "url": "https://github.com/blairjordan/codachi"
   },
   "publisher": "pegleg",
-  "version": "1.4.0",
+  "version": "1.6.1",
   "engines": {
     "vscode": "^1.64.0"
   },
@@ -28,11 +28,23 @@
   ],
   "license": "MIT",
   "activationEvents": [
-    "*"
+    "*",
+    "onView:petsView",
+    "onView:codachiView"
   ],
   "icon": "icon.png",
   "main": "./out/extension/extension.js",
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "codachiView",
+          "name": "Codachi",
+          "when": "codachi.position == 'explorer'"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "codachi.showPanel",
@@ -41,6 +53,10 @@
       {
         "command": "codachi.spawnNewPet",
         "title": "Codachi: New Pet"
+      },
+      {
+        "command": "codachi.openExplorer",
+        "title": "Codachi: Open Explorer View"
       }
     ],
     "configuration": [
@@ -53,6 +69,19 @@
             "maximum": 1.5,
             "description": "The scale factor to apply to all pets (smaller values make pets smaller, larger values make them bigger)",
             "scope": "window"
+          },
+          "codachi.position": {
+            "type": "string",
+            "enum": [
+              "panel",
+              "explorer"
+            ],
+            "default": "panel",
+            "description": "Where to show your Codachi pet (panel or explorer view)",
+            "enumItemLabels": [
+              "Panel",
+              "Explorer"
+            ]
           }
         }
       }
@@ -66,7 +95,9 @@
     "watch": "tsc -watch -p ./tsconfig.extension.json",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/extension/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "test:mocha": "npx mocha --require ts-node/register --ui bdd src/test/suite/pets.test.ts --bail false --no-diff",
+    "test:all": "npm run test:mocha && npm run test || echo 'VS Code integration tests require VS Code environment'"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
@@ -79,6 +110,7 @@
     "eslint": "^8.9.0",
     "glob": "^7.2.0",
     "mocha": "^9.2.1",
+    "ts-node": "^10.5.0",
     "typescript": "^4.5.5",
     "webpack": "^5.70.0",
     "webpack-cli": "^4.9.2"

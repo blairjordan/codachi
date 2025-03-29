@@ -171,6 +171,12 @@ export const app = ({
   setState('basePetUri', basePetUri)
 
   if (userPet) {
+    // Only play the transition animation for eggs or if explicitly requested
+    if (userPet.level > 0) {
+      userPet.isTransitionIn = false
+    }
+
+    // Add the pet to the panel
     addPetToPanel({ userPet })
   }
 
@@ -183,13 +189,14 @@ export const app = ({
         break
 
       case 'update-pet':
-        addPetToPanel({
-          userPet: {
-            ...data.userPet,
-            leftPosition: state.userPet.leftPosition,
-            direction: state.userPet.direction,
-          },
-        })
+        // Preserve the current position and direction
+        const updatedPet = {
+          ...data.userPet,
+          leftPosition: state.userPet.leftPosition,
+          direction: state.userPet.direction,
+        }
+
+        addPetToPanel({ userPet: updatedPet })
         break
     }
   })
