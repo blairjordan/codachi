@@ -117,7 +117,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 150000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -132,7 +132,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 240000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -171,7 +171,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 40,
+            xp: 100000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -187,7 +187,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 50,
+            xp: 600000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -227,7 +227,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 599900,
             defaultState: 'walking',
             animations: {
               transition,
@@ -243,7 +243,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 600000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -283,7 +283,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 150000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -299,7 +299,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 240000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -340,7 +340,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 150000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -357,7 +357,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 240000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -399,7 +399,7 @@ export const petTypes = new Map<string, Pet>([
         [
           2,
           {
-            xp: 50,
+            xp: 150000,
             defaultState: 'walking',
             animations: {
               transition,
@@ -416,7 +416,7 @@ export const petTypes = new Map<string, Pet>([
         [
           3,
           {
-            xp: 60,
+            xp: 240000,
             defaultState: 'walking',
             animations: {
               transition,
