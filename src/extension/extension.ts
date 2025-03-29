@@ -92,6 +92,9 @@ class PetState {
       .get('codachi.scaleFactor', 1.0)
     pet.scale = scaleFactor
 
+    // Ensure transition flag is off for existing pets
+    pet.isTransitionIn = false
+
     return pet
   }
 
@@ -387,17 +390,12 @@ class CodachiContentProvider {
         p {
           margin-bottom: 15px;
         }
-        .link {
-          color: var(--vscode-textLink-foreground);
-          cursor: pointer;
-          text-decoration: underline;
-        }
       </style>
     </head>
     <body>
       <h2>Codachi is currently in ${currentPosition} mode</h2>
       <p>Your Codachi pet is currently displayed in the ${currentPosition}.</p>
-      <p>You can change this setting by clicking <span class="link" id="settings-link">here</span>.</p>
+      <p>You can change this setting by clicking <a href="#" id="settings-link">here</a>.</p>
       
       <script nonce="${nonce}">
         document.getElementById('settings-link').addEventListener('click', () => {
@@ -565,7 +563,7 @@ class CodachiViewProvider
   }
 
   /**
-   * Resolve the webview view when it becomes visible
+   * Called when the view is first created
    */
   resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -574,29 +572,37 @@ class CodachiViewProvider
   ) {
     this._view = webviewView
 
+    // Set webview options
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this._extensionUri],
+      localResourceRoots: [
+        this._extensionUri,
+        vscode.Uri.file(this._mediaPath),
+      ],
     }
 
-    // Set initial content
+    // Initialize webview content
     this.updateContent()
 
     // Handle messages from the webview
-    webviewView.webview.onDidReceiveMessage((message) => {
-      switch (message.command) {
-        case 'open-settings':
-          vscode.commands.executeCommand(
-            'workbench.action.openSettings',
-            'codachi.position'
-          )
+    webviewView.webview.onDidReceiveMessage((data) => {
+      switch (data.command) {
+        case 'alert':
+          vscode.window.showInformationMessage(data.text)
           break
+      }
+    })
+
+    // Update content when view becomes visible
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        this.updateContent()
       }
     })
   }
 
   /**
-   * Update the explorer view's content based on the current position
+   * Update the webview content based on current position
    */
   updateContent() {
     if (!this._view) {
@@ -618,8 +624,8 @@ class CodachiViewProvider
       // Only send pet state message if we're in explorer mode
       const pet = PetState.getPet(this._context)
 
-      // Don't trigger transition animation when switching views
-      if (PetState.isViewSwitching()) {
+      // Don't trigger transition animation when switching views or loading existing pets
+      if (PetState.isViewSwitching() || pet.level > 0) {
         pet.isTransitionIn = false
       }
 
