@@ -66,6 +66,16 @@ You can switch between Panel and Explorer modes in two ways:
    - Use `Codachi: Show Panel` to switch to Panel mode
    - Use `Codachi: Open Explorer View` to switch to Explorer mode
 
+### Enabling the XP Counter
+
+By default, the XP counter is hidden. To enable it:
+
+1. Open VS Code Settings (`Ctrl` + `,`)
+2. Search for "codachi.showXPCounter"
+3. Check the box to enable the XP counter
+
+The XP counter will appear in the top left corner of your Codachi view, showing your current XP and the total XP needed to reach the next level.
+
 ## Screenshots
 
 ### Panel Mode
