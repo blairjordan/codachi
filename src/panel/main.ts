@@ -1,16 +1,23 @@
+import { DOM } from './'
+import type { PetAnimation, UserPet } from './'
 import {
-  DOM,
-  PetAnimation,
-  UserPet,
-  adjustSpeedForScale,
   generatePet,
-  getPetAnimations,
   gifs,
-  setState,
   state,
+  setState,
+  adjustSpeedForScale,
+  getPetAnimations,
   transforms,
+  petTypes,
 } from './'
 import { initializeState } from './state'
+
+declare global {
+  interface Window {
+    codachiApp: any;
+    isExplorerView?: boolean;
+  }
+}
 
 const defaultState = {
   userPet: generatePet({ name: 'unknown', type: 'unknown' }),
@@ -28,7 +35,7 @@ const dom = new DOM({
 
 const TICK_INTERVAL_MS = 100
 
-const tick = ({ userPet }: { userPet: UserPet }) => {
+const tick = ({ userPet }: { userPet: UserPet }): void => {
   const { leftPosition, direction } = transforms[userPet.state].nextFrame({
     containerWidth:
       window.innerWidth ||
@@ -95,7 +102,7 @@ const setImage = ({
   container: HTMLElement
   selector: HTMLImageElement
   animation: PetAnimation
-}) => {
+}): void => {
   const { basePetUri, userPet } = state
 
   selector.src = `${basePetUri}/${gifs[animation.gif]}`
@@ -114,9 +121,10 @@ const setImage = ({
   container.style.left = `${animation.offset ?? 0}px`
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+const sleep = (ms: number): Promise<void> =>
+  new Promise((r) => setTimeout(r, ms))
 
-const startAnimation = () => {
+const startAnimation = (): void => {
   const { userPet } = state
   if (state.intervalId) {
     clearInterval(state.intervalId)
@@ -127,7 +135,11 @@ const startAnimation = () => {
   setState('intervalId', intervalId)
 }
 
-export const addPetToPanel = async ({ userPet }: { userPet: UserPet }) => {
+export const addPetToPanel = async ({
+  userPet,
+}: {
+  userPet: UserPet
+}): Promise<void> => {
   const { animation } = getPetAnimations({
     userPet,
   })
@@ -167,8 +179,12 @@ export const app = ({
 }: {
   userPet: UserPet
   basePetUri: string
-}) => {
+}): void => {
   setState('basePetUri', basePetUri)
+  
+  // Expose petTypes to the window for XP bar calculations
+  window.codachiApp = window.codachiApp || {};
+  window.codachiApp.petTypes = petTypes;
 
   if (userPet) {
     // Only play the transition animation for eggs or if explicitly requested
@@ -179,7 +195,7 @@ export const app = ({
     // Add the pet to the panel
     addPetToPanel({ userPet })
   }
-
+  
   // Handle messages sent from the extension to the webview
   window.addEventListener('message', (event): void => {
     const { command, data } = event.data // The data that the extension sent
@@ -188,7 +204,15 @@ export const app = ({
         addPetToPanel({ userPet: data.userPet })
         break
 
-      case 'update-pet':
+      case 'update-pet': {
+        // Check if this is just an XP update
+        if (data.isXPUpdate && state.userPet) {
+          // Just update the XP value without resetting animation state
+          state.userPet.xp = data.userPet.xp;
+          return;
+        }
+        
+        // For other updates (level changes, etc.), do a full refresh
         // Preserve the current position and direction
         const updatedPet = {
           ...data.userPet,
@@ -196,8 +220,10 @@ export const app = ({
           direction: state.userPet.direction,
         }
 
+        // Add the pet to the panel for a full refresh
         addPetToPanel({ userPet: updatedPet })
         break
+      }
     }
   })
 }

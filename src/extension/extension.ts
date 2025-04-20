@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import path = require('path')
-import * as crypto from 'crypto'
+import path = require('node:path')
+import * as crypto from 'node:crypto'
 import * as vscode from 'vscode'
 import {
   adjustSpeedForScale,
@@ -10,8 +10,9 @@ import {
   petTypes,
   randomPetName,
   randomPetType,
-  UserPet,
 } from '../panel'
+
+import type { UserPet } from '../panel/types'
 
 // Define position type to avoid string comparison issues
 type Position = 'panel' | 'explorer'
@@ -19,36 +20,47 @@ type Position = 'panel' | 'explorer'
 /**
  * Global state for managing the single pet across views
  */
-class PetState {
-  // The single pet instance used throughout the extension
-  private static _pet: UserPet | undefined
+let _pet: UserPet | undefined
 
-  // A flag to track if we're in the middle of a view switch
-  private static _isViewSwitching = false
-
-  // Get the current pet, creating one if needed
-  static getPet(context: vscode.ExtensionContext): UserPet {
-    if (!this._pet) {
-      this._pet = this.loadFromStorage(context)
+/**
+ * Loads the pet state from storage.
+ */
+function loadFromStorage(context: vscode.ExtensionContext): UserPet {
+  const storedPets = context.globalState.get<UserPet[]>('pets', [])
+  return (
+    storedPets[0] || {
+      type: randomPetType(),
+      name: randomPetName(),
+      level: 0,
+      xp: 0,
+      state: 'idle',
+      scale: 1.0,
+      isTransitionIn: false,
     }
-    return this._pet
+  )
+}
+let _isViewSwitching = false
+
+/**
+ * Class to manage pet state
+ */
+
+// biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
+class PetState {
+  static getPet(context: vscode.ExtensionContext): UserPet {
+    if (!_pet) {
+      _pet = loadFromStorage(context)
+    }
+    return _pet
   }
 
-  // Save the current pet to storage
   static savePet(context: vscode.ExtensionContext): Thenable<void> {
-    if (this._pet) {
-      return context.globalState.update('pets', [this._pet])
+    if (_pet) {
+      return context.globalState.update('pets', [_pet])
     }
     return Promise.resolve()
   }
 
-  // Update the pet with a new state
-  static updatePet(pet: UserPet, context: vscode.ExtensionContext) {
-    this._pet = pet
-    return this.savePet(context)
-  }
-
-  // Create a new random pet
   static createNewPet(context: vscode.ExtensionContext): UserPet {
     const scaleFactor = vscode.workspace
       .getConfiguration()
@@ -66,46 +78,17 @@ class PetState {
       pet.originalSpeed = pet.speed
     }
 
-    this._pet = pet
-    this.savePet(context)
+    _pet = pet
+    PetState.savePet(context)
     return pet
   }
 
-  // Load pet from storage or create a new one
-  private static loadFromStorage(context: vscode.ExtensionContext): UserPet {
-    const storedPets = context.globalState.get('pets') as UserPet[] | undefined
-
-    if (!storedPets || storedPets.length === 0) {
-      return this.createNewPet(context)
-    }
-
-    const pet = storedPets[0] // Only supporting a single pet for now
-
-    // Ensure originalSpeed is set for stored pets
-    if (!pet.originalSpeed && pet.speed) {
-      pet.originalSpeed = pet.speed
-    }
-
-    // Apply current scale factor to existing pet
-    const scaleFactor = vscode.workspace
-      .getConfiguration()
-      .get('codachi.scaleFactor', 1.0)
-    pet.scale = scaleFactor
-
-    // Ensure transition flag is off for existing pets
-    pet.isTransitionIn = false
-
-    return pet
+  static setViewSwitching(isViewSwitching: boolean): void {
+    _isViewSwitching = isViewSwitching
   }
 
-  // Set flag when switching view modes
-  static setViewSwitching(isViewSwitching: boolean) {
-    this._isViewSwitching = isViewSwitching
-  }
-
-  // Check if we're in the middle of a view switch
   static isViewSwitching(): boolean {
-    return this._isViewSwitching
+    return _isViewSwitching
   }
 }
 
@@ -116,6 +99,15 @@ function getConfigurationPosition(): Position {
   return vscode.workspace
     .getConfiguration('codachi')
     .get<Position>('position', 'panel')
+}
+
+/**
+ * Returns whether to show the XP counter
+ */
+function shouldShowXPCounter(): boolean {
+  return vscode.workspace
+    .getConfiguration('codachi')
+    .get<boolean>('showXPCounter', false)
 }
 
 /**
@@ -150,6 +142,12 @@ class CodachiContentProvider {
     const pet = PetState.getPet(this._context)
     pet.xp = pet.xp + 1
 
+    // Always update views with current XP for real-time updates
+    this.updateViews(pet)
+
+    // Save XP progress on every keystroke
+    PetState.savePet(this._context)
+
     // Check less frequently for higher level pets
     const isEgg = pet.level === 0
     const checkFrequency = isEgg ? 1 : 10
@@ -174,7 +172,7 @@ class CodachiContentProvider {
       const petTypeData = petTypes.get(pet.type)
       if (petTypeData) {
         const level1Data = petTypeData.levels.get(1)
-        if (level1Data && level1Data.animations[pet.state]) {
+        if (level1Data?.animations[pet.state]) {
           pet.speed = level1Data.animations[pet.state].speed || 0
           pet.originalSpeed = pet.speed
         }
@@ -192,12 +190,6 @@ class CodachiContentProvider {
       if (!PetState.isViewSwitching()) {
         pet.isTransitionIn = true
       }
-
-      // Save the updated pet state
-      PetState.savePet(this._context)
-
-      // Update both views with new state
-      this.updateViews(pet)
 
       // Show appropriate notification based on level change
       if (previousLevel === 0 && pet.level === 1) {
@@ -219,21 +211,21 @@ class CodachiContentProvider {
             }
           })
       }
-    } else {
-      // Save XP progress even if level didn't change
-      PetState.savePet(this._context)
     }
+    // No need for else block with savePet since we save on every keystroke
   }
 
   /**
    * Update all active views with the current pet state
    */
   protected updateViews(pet: UserPet) {
+    const isXPUpdate = true; // Flag to indicate this is an XP update
+
     // Update panel view if it exists and is visible
     if (CodachiState.panel?.panel && getConfigurationPosition() === 'panel') {
       CodachiState.panel.panel.webview.postMessage({
         command: 'update-pet',
-        data: { userPet: pet },
+        data: { userPet: pet, isXPUpdate },
       })
     }
 
@@ -244,7 +236,7 @@ class CodachiContentProvider {
     ) {
       CodachiState.explorerView._view.webview.postMessage({
         command: 'update-pet',
-        data: { userPet: pet },
+        data: { userPet: pet, isXPUpdate },
       })
     }
   }
@@ -320,9 +312,48 @@ class CodachiContentProvider {
         img {
           image-rendering: pixelated !important;
         }
+        
+        /* XP Counter Styles for Explorer */
+        #xp-counter {
+          position: absolute !important;
+          top: 5px !important;
+          left: 10px !important;
+          z-index: 1000 !important;
+          font-family: var(--vscode-font-family) !important;
+          font-size: 12px !important;
+          color: var(--vscode-foreground) !important;
+          font-weight: bold !important;
+          background-color: rgba(0, 0, 0, 0.5) !important;
+          padding: 3px 8px !important;
+          border-radius: 4px !important;
+          display: ${shouldShowXPCounter() ? 'block' : 'none'} !important;
+          min-width: 120px !important;
+        }
       </style>
     `
-      : ''
+      : `
+      <style>
+        /* XP Counter Styles for Panel */
+        #xp-counter {
+          position: fixed;
+          top: 5px;
+          left: 10px;
+          z-index: 1000;
+          font-family: var(--vscode-font-family);
+          font-size: 12px;
+          color: var(--vscode-foreground);
+          font-weight: bold;
+          background-color: rgba(0, 0, 0, 0.5);
+          padding: 3px 8px;
+          border-radius: 4px;
+          display: ${shouldShowXPCounter() ? 'block' : 'none'};
+          min-width: 120px;
+        }
+      </style>
+      `
+
+    // Log the XP counter visibility state
+    console.log('XP Counter should be visible:', shouldShowXPCounter());
 
     return `<!DOCTYPE html>
     <html lang="en">
@@ -338,6 +369,7 @@ class CodachiContentProvider {
       ${extraStyles}
     </head>
     <body>
+      <div id="xp-counter" style="display: ${shouldShowXPCounter() ? 'block' : 'none'}">XP: 0</div>
       <div id="container">
         <div id="movement-container">
           <div id="transition-container">
@@ -356,6 +388,71 @@ class CodachiContentProvider {
         codachiApp.app({ basePetUri: '${basePetUri}', userPet: ${JSON.stringify(
       pet
     )} });
+        
+        // Function to format numbers with K for thousands
+        function formatNumber(number) {
+          if (number < 1000) {
+            // For numbers less than 1000, no formatting
+            return number.toString();
+          } else if (number < 10000) {
+            // For 1,000-9,999, use commas
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          } else {
+            // For 10,000+, use K format
+            return (number / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+          }
+        }
+        
+        // Check if XP counter should be visible 
+        const shouldShowXPCounter = ${shouldShowXPCounter()};
+        console.log("JS: XP Counter should be visible:", shouldShowXPCounter);
+        
+        // Function to update the XP counter
+        function updateXPCounter(userPet) {
+          const xpCounter = document.getElementById('xp-counter');
+          if (xpCounter) {
+            // Get the total XP required for the next level
+            let nextLevelXP = 30; // Default for eggs (level 0)
+            
+            if (window.codachiApp && window.codachiApp.petTypes) {
+              const petTypeData = window.codachiApp.petTypes.get(userPet.type);
+              if (petTypeData) {
+                const nextLevelData = petTypeData.levels.get(userPet.level + 1);
+                if (nextLevelData) {
+                  nextLevelXP = nextLevelData.xp;
+                }
+              }
+            }
+            
+            // Format both current XP and next level XP
+            const currentXP = userPet.xp || 0;
+            const formattedCurrentXP = formatNumber(currentXP);
+            const formattedNextLevelXP = formatNumber(nextLevelXP);
+            
+            // Update the display
+            xpCounter.textContent = "XP: " + formattedCurrentXP + " / " + formattedNextLevelXP;
+            
+            // Make sure visibility setting is applied
+            xpCounter.style.display = shouldShowXPCounter ? 'block' : 'none';
+          }
+        }
+        
+        // Initial update - will run as soon as the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+          updateXPCounter(${JSON.stringify(pet)});
+        });
+        
+        // Also try to update immediately
+        updateXPCounter(${JSON.stringify(pet)});
+        
+        // Listen for pet updates to update the XP counter
+        window.addEventListener('message', (event) => {
+          const { command, data } = event.data;
+          if (command === 'update-pet' && data && data.userPet) {
+            // If this is an XP update (which happens frequently), update the counter
+            updateXPCounter(data.userPet);
+          }
+        });
       </script>
     </body>
     </html>`
@@ -413,10 +510,6 @@ class CodachiContentProvider {
  */
 class PetPanel extends CodachiContentProvider {
   panel: vscode.WebviewPanel | undefined
-
-  constructor(context: vscode.ExtensionContext) {
-    super(context)
-  }
 
   /**
    * Update the pet's scale factor
@@ -558,10 +651,6 @@ class CodachiViewProvider
   public static readonly viewType = 'codachiView'
   _view?: vscode.WebviewView
 
-  constructor(context: vscode.ExtensionContext) {
-    super(context)
-  }
-
   /**
    * Called when the view is first created
    */
@@ -640,9 +729,9 @@ class CodachiViewProvider
 /**
  * Global state to track view instances
  */
-class CodachiState {
-  static panel: PetPanel | undefined
-  static explorerView: CodachiViewProvider | undefined
+const CodachiState = {
+  panel: undefined as PetPanel | undefined,
+  explorerView: undefined as CodachiViewProvider | undefined,
 }
 
 /**
@@ -676,19 +765,6 @@ export function activate(context: vscode.ExtensionContext) {
     )
   )
 
-  // Register keystroke handler
-  vscode.commands.registerCommand('type', async (args) => {
-    if (getConfigurationPosition() === 'panel' && CodachiState.panel) {
-      CodachiState.panel.onKeystroke()
-    } else if (
-      getConfigurationPosition() === 'explorer' &&
-      CodachiState.explorerView
-    ) {
-      CodachiState.explorerView.onKeystroke()
-    }
-    return vscode.commands.executeCommand('default:type', args)
-  })
-
   // Register show panel command
   context.subscriptions.push(
     vscode.commands.registerCommand('codachi.showPanel', () => {
@@ -707,7 +783,7 @@ export function activate(context: vscode.ExtensionContext) {
           return
         }
 
-        if (CodachiState.panel && CodachiState.panel.panel) {
+        if (CodachiState.panel?.panel) {
           // Panel is already open, no need to create it
           resolve()
           return
@@ -809,7 +885,10 @@ export function activate(context: vscode.ExtensionContext) {
   // Register panel serializer for restoring panel state
   if (vscode.window.registerWebviewPanelSerializer) {
     vscode.window.registerWebviewPanelSerializer('petPanel', {
-      async deserializeWebviewPanel(panel: vscode.WebviewPanel, _: any) {
+      async deserializeWebviewPanel(
+        panel: vscode.WebviewPanel,
+        _state: unknown
+      ) {
         CodachiState.panel = new PetPanel(context)
         CodachiState.panel.createPanel(panel)
       },
@@ -855,6 +934,20 @@ export function activate(context: vscode.ExtensionContext) {
           // Clear the view switching flag
           PetState.setViewSwitching(false)
         }
+        
+        // Handle XP counter visibility changes
+        if (e.affectsConfiguration('codachi.showXPCounter')) {
+          console.log('XP counter visibility changed to:', shouldShowXPCounter());
+          
+          // Update both views to reflect the new setting
+          if (CodachiState.panel?.panel) {
+            CodachiState.panel.updateContent()
+          }
+
+          if (CodachiState.explorerView) {
+            CodachiState.explorerView.updateContent()
+          }
+        }
       }
     )
   )
@@ -863,6 +956,30 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(updateExtensionPositionContext)
   )
+
+  // Register text document change handler for XP 
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument(event => {
+      if (event.contentChanges.length === 0) {return;}
+      if (event.reason !== undefined) {return;}
+      
+      updatePetXP(context);
+    })
+  )
+
+  // Helper function to update pet XP regardless of which view is active
+  function updatePetXP(context: vscode.ExtensionContext) {
+    // Call the appropriate handler based on which view is active,
+    // but they both update the same pet
+    if (getConfigurationPosition() === 'panel' && CodachiState.panel) {
+      CodachiState.panel.onKeystroke();
+    } else if (
+      getConfigurationPosition() === 'explorer' &&
+      CodachiState.explorerView
+    ) {
+      CodachiState.explorerView.onKeystroke();
+    }
+  }
 }
 
 /**
