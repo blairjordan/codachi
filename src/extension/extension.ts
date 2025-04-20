@@ -381,6 +381,14 @@ class CodachiContentProvider {
         </div>
       </div>
       
+      <script nonce="${nonce}">
+        // Disable service worker registration attempts to prevent errors in VS Code
+        if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+          navigator.serviceWorker.register = function() {
+            return Promise.reject(new Error('Service workers are not supported in VS Code webviews'));
+          };
+        }
+      </script>
       <script nonce="${nonce}" src="${scriptUri}"></script>
       <script nonce="${nonce}">
         // Set a flag to let the animation script know we're in explorer mode
@@ -493,6 +501,15 @@ class CodachiContentProvider {
       <h2>Codachi is currently in ${currentPosition} mode</h2>
       <p>Your Codachi pet is currently displayed in the ${currentPosition}.</p>
       <p>You can change this setting by clicking <a href="#" id="settings-link">here</a>.</p>
+      
+      <script nonce="${nonce}">
+        // Disable service worker registration attempts to prevent errors in VS Code
+        if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+          navigator.serviceWorker.register = function() {
+            return Promise.reject(new Error('Service workers are not supported in VS Code webviews'));
+          };
+        }
+      </script>
       
       <script nonce="${nonce}">
         document.getElementById('settings-link').addEventListener('click', () => {

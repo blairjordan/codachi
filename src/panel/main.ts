@@ -14,7 +14,7 @@ import { initializeState } from './state'
 
 declare global {
   interface Window {
-    codachiApp: any;
+    codachiApp: { [key: string]: unknown };
     isExplorerView?: boolean;
   }
 }
