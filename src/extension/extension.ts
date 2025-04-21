@@ -312,42 +312,14 @@ class CodachiContentProvider {
         img {
           image-rendering: pixelated !important;
         }
-        
-        /* XP Counter Styles for Explorer */
-        #xp-counter {
-          position: absolute !important;
-          top: 5px !important;
-          left: 10px !important;
-          z-index: 1000 !important;
-          font-family: var(--vscode-font-family) !important;
-          font-size: 12px !important;
-          color: var(--vscode-foreground) !important;
-          font-weight: bold !important;
-          background-color: rgba(0, 0, 0, 0.5) !important;
-          padding: 3px 8px !important;
-          border-radius: 4px !important;
-          display: ${shouldShowXPCounter() ? 'block' : 'none'} !important;
-          min-width: 120px !important;
-        }
       </style>
     `
       : `
       <style>
-        /* XP Counter Styles for Panel */
-        #xp-counter {
-          position: fixed;
-          top: 5px;
-          left: 10px;
-          z-index: 1000;
-          font-family: var(--vscode-font-family);
-          font-size: 12px;
-          color: var(--vscode-foreground);
-          font-weight: bold;
-          background-color: rgba(0, 0, 0, 0.5);
-          padding: 3px 8px;
-          border-radius: 4px;
-          display: ${shouldShowXPCounter() ? 'block' : 'none'};
-          min-width: 120px;
+        /* Panel styles */
+        body {
+          padding: 0;
+          margin: 0;
         }
       </style>
       `
@@ -362,14 +334,61 @@ class CodachiContentProvider {
       <script nonce="${nonce}">var exports = {};</script>
       <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
         webview.cspSource
-      }; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
+      } 'nonce-${nonce}'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <link href="${stylesUri}" rel="stylesheet">
       <title>codachi</title>
       ${extraStyles}
+      <style nonce="${nonce}">
+        .xp-container {
+          position: fixed;
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          z-index: 9999;
+          background-color: rgba(0, 0, 0, 0.5);
+          padding: 8px;
+          border-radius: 5px;
+          display: block;
+        }
+        .xp-text {
+          color: white;
+          font-size: 12px;
+          margin-bottom: 4px;
+          font-weight: bold;
+        }
+        .xp-progress-bg {
+          width: 100%;
+          height: 10px;
+          background-color: rgba(100, 100, 100, 0.3);
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        .xp-progress-fill {
+          width: 50%;
+          height: 100%;
+          background-color: #0078D7;
+        }
+      </style>
     </head>
     <body>
-      <div id="xp-counter" style="display: ${shouldShowXPCounter() ? 'block' : 'none'}">XP: 0</div>
+      <!-- XP bar with proper classes -->
+      <div class="xp-container">
+        <div class="xp-text">XP: 15 / 30</div>
+        <div class="xp-progress-bg">
+          <div class="xp-progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Fix service worker issue -->
+      <script nonce="${nonce}">
+        if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+          navigator.serviceWorker.register = function() {
+            return Promise.reject(new Error('Service workers are not supported in VS Code webviews'));
+          };
+        }
+      </script>
+
       <div id="container">
         <div id="movement-container">
           <div id="transition-container">
@@ -381,14 +400,6 @@ class CodachiContentProvider {
         </div>
       </div>
       
-      <script nonce="${nonce}">
-        // Disable service worker registration attempts to prevent errors in VS Code
-        if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
-          navigator.serviceWorker.register = function() {
-            return Promise.reject(new Error('Service workers are not supported in VS Code webviews'));
-          };
-        }
-      </script>
       <script nonce="${nonce}" src="${scriptUri}"></script>
       <script nonce="${nonce}">
         // Set a flag to let the animation script know we're in explorer mode
@@ -400,25 +411,21 @@ class CodachiContentProvider {
         // Function to format numbers with K for thousands
         function formatNumber(number) {
           if (number < 1000) {
-            // For numbers less than 1000, no formatting
             return number.toString();
           } else if (number < 10000) {
-            // For 1,000-9,999, use commas
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
           } else {
-            // For 10,000+, use K format
             return (number / 1000).toFixed(1).replace(/\.0$/, "") + "K";
           }
         }
         
-        // Check if XP counter should be visible 
-        const shouldShowXPCounter = ${shouldShowXPCounter()};
-        console.log("JS: XP Counter should be visible:", shouldShowXPCounter);
-        
-        // Function to update the XP counter
+        // Function to update the XP counter and progress bar
         function updateXPCounter(userPet) {
-          const xpCounter = document.getElementById('xp-counter');
-          if (xpCounter) {
+          const xpContainer = document.querySelector('.xp-container');
+          const xpText = document.querySelector('.xp-text');
+          const xpProgressFill = document.querySelector('.xp-progress-fill');
+          
+          if (xpContainer && xpText && xpProgressFill) {
             // Get the total XP required for the next level
             let nextLevelXP = 30; // Default for eggs (level 0)
             
@@ -437,27 +444,28 @@ class CodachiContentProvider {
             const formattedCurrentXP = formatNumber(currentXP);
             const formattedNextLevelXP = formatNumber(nextLevelXP);
             
-            // Update the display
-            xpCounter.textContent = "XP: " + formattedCurrentXP + " / " + formattedNextLevelXP;
+            // Calculate percentage for progress bar (clamped between 0-100%)
+            const percentage = Math.min(100, Math.max(0, (currentXP / nextLevelXP) * 100));
             
-            // Make sure visibility setting is applied
-            xpCounter.style.display = shouldShowXPCounter ? 'block' : 'none';
+            // Update the text display
+            xpText.textContent = "XP: " + formattedCurrentXP + " / " + formattedNextLevelXP;
+            
+            // Update the progress bar (ensure at least 5% to be visible)
+            const displayPercentage = Math.max(5, percentage);
+            xpProgressFill.style.width = displayPercentage + "%";
+            
+            // Show/hide based on setting
+            xpContainer.style.display = ${shouldShowXPCounter()} ? 'block' : 'none';
           }
         }
         
-        // Initial update - will run as soon as the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-          updateXPCounter(${JSON.stringify(pet)});
-        });
-        
-        // Also try to update immediately
+        // Initial update
         updateXPCounter(${JSON.stringify(pet)});
         
         // Listen for pet updates to update the XP counter
         window.addEventListener('message', (event) => {
           const { command, data } = event.data;
           if (command === 'update-pet' && data && data.userPet) {
-            // If this is an XP update (which happens frequently), update the counter
             updateXPCounter(data.userPet);
           }
         });
@@ -479,10 +487,10 @@ class CodachiContentProvider {
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${nonce}'; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>codachi</title>
-      <style>
+      <style nonce="${nonce}">
         body {
           font-family: var(--vscode-font-family);
           color: var(--vscode-foreground);
@@ -495,9 +503,46 @@ class CodachiContentProvider {
         p {
           margin-bottom: 15px;
         }
+        .xp-container {
+          position: fixed;
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          z-index: 9999;
+          background-color: rgba(0, 0, 0, 0.5);
+          padding: 8px;
+          border-radius: 5px;
+          display: block;
+        }
+        .xp-text {
+          color: white;
+          font-size: 12px;
+          margin-bottom: 4px;
+          font-weight: bold;
+        }
+        .xp-progress-bg {
+          width: 100%;
+          height: 10px;
+          background-color: rgba(100, 100, 100, 0.3);
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        .xp-progress-fill {
+          width: 50%;
+          height: 100%;
+          background-color: #0078D7;
+        }
       </style>
     </head>
     <body>
+      <!-- XP bar with proper classes -->
+      <div class="xp-container">
+        <div class="xp-text">XP: 15 / 30</div>
+        <div class="xp-progress-bg">
+          <div class="xp-progress-fill"></div>
+        </div>
+      </div>
+    
       <h2>Codachi is currently in ${currentPosition} mode</h2>
       <p>Your Codachi pet is currently displayed in the ${currentPosition}.</p>
       <p>You can change this setting by clicking <a href="#" id="settings-link">here</a>.</p>
