@@ -66,31 +66,38 @@ const tick = ({ userPet }: { userPet: UserPet }): void => {
     petContainer.style.bottom = `${verticalAdjustment}px`
   }
 
-  if (userPet.isTransitionIn) {
-    const { transition: animation } = getPetAnimations({
-      userPet,
-    })
+  // We're not going to touch isTransitionIn here - we'll only handle it in specific events
+}
 
-    if (animation) {
-      const transitionContainer = dom.getTransitionSelector()
-      transitionContainer.style.marginLeft = `${userPet.leftPosition}px`
+// Explicitly handle transitions for specific events
+const handleTransition = (userPet: UserPet): void => {
+  if (!userPet.isTransitionIn) return;
+  
+  const { transition: animation } = getPetAnimations({
+    userPet,
+  })
 
-      // Also adjust transition container height
-      const transitionContainerElement = document.getElementById(
-        'transition-container'
-      )
-      if (transitionContainerElement) {
-        const verticalAdjustment = (animation.height * (userPet.scale - 1)) / 2
-        transitionContainerElement.style.bottom = `${verticalAdjustment}px`
-      }
+  if (animation) {
+    const transitionContainer = dom.getTransitionSelector()
+    transitionContainer.style.marginLeft = `${userPet.leftPosition}px`
 
-      setImage({
-        container: dom.getTransitionSelector(),
-        selector: dom.getTransitionImageSelector(),
-        animation,
-      })
-      state.userPet.isTransitionIn = false
+    // Also adjust transition container height
+    const transitionContainerElement = document.getElementById(
+      'transition-container'
+    )
+    if (transitionContainerElement) {
+      const verticalAdjustment = (animation.height * (userPet.scale - 1)) / 2
+      transitionContainerElement.style.bottom = `${verticalAdjustment}px`
     }
+
+    setImage({
+      container: dom.getTransitionSelector(),
+      selector: dom.getTransitionImageSelector(),
+      animation,
+    })
+    
+    // Clear the transition flag after handling it
+    state.userPet.isTransitionIn = false
   }
 }
 
@@ -153,12 +160,21 @@ export const addPetToPanel = async ({
     userPet.speed = adjustSpeedForScale(userPet.originalSpeed, userPet.scale)
   }
 
+  // Update the state
   setState('userPet', userPet)
+  
+  // Handle transition if needed (but only once)
+  if (userPet.isTransitionIn) {
+    handleTransition(userPet)
+  }
+  
+  // Start the animation loop
   startAnimation()
 
-  // Give the transition a chance to play
+  // Give everything a chance to render
   await sleep(TICK_INTERVAL_MS * 2)
 
+  // Set the main pet image
   setImage({
     selector: dom.getPetImageSelector(),
     animation,
@@ -187,12 +203,7 @@ export const app = ({
   window.codachiApp.petTypes = petTypes;
 
   if (userPet) {
-    // Only play the transition animation for eggs or if explicitly requested
-    if (userPet.level > 0) {
-      userPet.isTransitionIn = false
-    }
-
-    // Add the pet to the panel
+    // Handle initial state
     addPetToPanel({ userPet })
   }
   
@@ -201,28 +212,27 @@ export const app = ({
     const { command, data } = event.data // The data that the extension sent
     switch (command) {
       case 'spawn-pet':
+        // New pet creation - always show transition
         addPetToPanel({ userPet: data.userPet })
         break
 
       case 'update-pet': {
-        // Check if this is just an XP update
+        // If this is just an XP update, only update the XP value
         if (data.isXPUpdate && state.userPet) {
-          // Just update the XP value without resetting animation state
           state.userPet.xp = data.userPet.xp;
           return;
         }
         
-        // For other updates (level changes, etc.), do a full refresh
-        // Preserve the current position and direction
+        // For level changes or state changes, do a full refresh
         const updatedPet = {
           ...data.userPet,
           leftPosition: state.userPet.leftPosition,
           direction: state.userPet.direction,
         }
-
-        // Add the pet to the panel for a full refresh
+        
+        // We want transitions to work for level changes
         addPetToPanel({ userPet: updatedPet })
-        break
+        break;
       }
     }
   })
