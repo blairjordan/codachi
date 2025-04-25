@@ -72,7 +72,7 @@ class PetState {
     })
 
     pet.scale = scaleFactor
-    
+
     // Only set the transition flag for eggs (level 0)
     // This is important to prevent unwanted transitions
     if (pet.level === 0) {
@@ -111,10 +111,10 @@ function getConfigurationPosition(): Position {
 /**
  * Returns whether to show the XP counter
  */
-function shouldShowXPCounter(): boolean {
+function shouldShowXP(): boolean {
   return vscode.workspace
     .getConfiguration('codachi')
-    .get<boolean>('showXPCounter', false)
+    .get<boolean>('showXP', false)
 }
 
 /**
@@ -147,10 +147,10 @@ class CodachiContentProvider {
    */
   onKeystroke() {
     const pet = PetState.getPet(this._context)
-    
+
     // For normal XP updates, we don't need transitions
-    pet.isTransitionIn = false;
-    
+    pet.isTransitionIn = false
+
     pet.xp = pet.xp + 1
 
     // Send real-time XP updates without triggering transitions
@@ -185,18 +185,18 @@ class CodachiContentProvider {
           pet.originalSpeed = pet.speed
         }
       }
-      
+
       // Send a level change update (not an XP update)
       this.updateViews(pet, false)
       PetState.savePet(this._context)
-      
+
       // Show hatching notification
       vscode.window.showInformationMessage(`${pet.name} has hatched!`)
-      
+
       // No need to continue since we've already handled this case
       return
     }
-    
+
     // Normal level mutation for non-egg levels
     mutateLevel({ userPet: pet })
 
@@ -205,7 +205,7 @@ class CodachiContentProvider {
       // Only set transition flag for actual evolution, not view switching
       if (!PetState.isViewSwitching()) {
         pet.isTransitionIn = true
-        
+
         // Send a level change update (not an XP update)
         this.updateViews(pet, false)
         PetState.savePet(this._context)
@@ -349,7 +349,9 @@ class CodachiContentProvider {
       <script nonce="${nonce}">var exports = {};</script>
       <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
         webview.cspSource
-      } 'nonce-${nonce}'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
+      } 'nonce-${nonce}'; img-src ${
+      webview.cspSource
+    } https:; script-src 'nonce-${nonce}';">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <link href="${stylesUri}" rel="stylesheet">
       <title>codachi</title>
@@ -434,8 +436,8 @@ class CodachiContentProvider {
           }
         }
         
-        // Function to update the XP counter and progress bar
-        function updateXPCounter(userPet) {
+        // Function to update the XP bar
+        function updateXP(userPet) {
           const xpContainer = document.querySelector('.xp-container');
           const xpText = document.querySelector('.xp-text');
           const xpProgressFill = document.querySelector('.xp-progress-fill');
@@ -463,18 +465,18 @@ class CodachiContentProvider {
             const percentage = Math.min(100, Math.max(0, (currentXP / nextLevelXP) * 100));
             xpText.textContent = "XP: " + formattedCurrentXP + " / " + formattedNextLevelXP;
             xpProgressFill.style.width = percentage + "%";
-            xpContainer.style.display = ${shouldShowXPCounter()} ? 'block' : 'none';
+            xpContainer.style.display = ${shouldShowXP()} ? 'block' : 'none';
           }
         }
         
         // Initial update
-        updateXPCounter(${JSON.stringify(pet)});
+        updateXP(${JSON.stringify(pet)});
         
-        // Listen for pet updates to update the XP counter
+        // Listen for pet updates to update the XP bar
         window.addEventListener('message', (event) => {
           const { command, data } = event.data;
           if (command === 'update-pet' && data && data.userPet) {
-            updateXPCounter(data.userPet);
+            updateXP(data.userPet);
           }
         });
       </script>
@@ -668,8 +670,8 @@ class PetPanel extends CodachiContentProvider {
 
       // When updating content, we don't want to trigger transitions
       // unless the pet was explicitly set to transition
-      const isXPUpdate = !pet.isTransitionIn;
-      
+      const isXPUpdate = !pet.isTransitionIn
+
       this.panel.webview.postMessage({
         command: 'update-pet',
         data: { userPet: pet, isXPUpdate },
@@ -757,8 +759,8 @@ class CodachiViewProvider
 
       // When updating content, we don't want to trigger transitions
       // unless the pet was explicitly set to transition
-      const isXPUpdate = !pet.isTransitionIn;
-      
+      const isXPUpdate = !pet.isTransitionIn
+
       this._view.webview.postMessage({
         command: 'update-pet',
         data: { userPet: pet, isXPUpdate },
@@ -865,16 +867,16 @@ export function activate(context: vscode.ExtensionContext) {
         const pet = PetState.createNewPet(context)
 
         // Determine which content provider is active based on position
-        let activeProvider: CodachiContentProvider | undefined;
+        let activeProvider: CodachiContentProvider | undefined
         if (position === 'panel' && CodachiState.panel) {
-          activeProvider = CodachiState.panel;
+          activeProvider = CodachiState.panel
         } else if (position === 'explorer' && CodachiState.explorerView) {
-          activeProvider = CodachiState.explorerView;
+          activeProvider = CodachiState.explorerView
         }
-        
+
         // Update the active view to reflect 0 XP immediately
         if (activeProvider) {
-          activeProvider.updateViews(pet, false);
+          activeProvider.updateViews(pet, false)
         }
 
         // Update the active view based on current position
@@ -986,9 +988,9 @@ export function activate(context: vscode.ExtensionContext) {
 
           PetState.setViewSwitching(false)
         }
-        
-        // Handle XP counter visibility changes
-        if (e.affectsConfiguration('codachi.showXPCounter')) {
+
+        // Handle XP bar visibility changes
+        if (e.affectsConfiguration('codachi.showXP')) {
           // Update both views to reflect the new setting
           if (CodachiState.panel?.panel) {
             CodachiState.panel.updateContent()
@@ -1007,13 +1009,17 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.onDidChangeActiveTextEditor(updateExtensionPositionContext)
   )
 
-  // Register text document change handler for XP 
+  // Register text document change handler for XP
   context.subscriptions.push(
-    vscode.workspace.onDidChangeTextDocument(event => {
-      if (event.contentChanges.length === 0) {return;}
-      if (event.reason !== undefined) {return;}
-      
-      updatePetXP(context);
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      if (event.contentChanges.length === 0) {
+        return
+      }
+      if (event.reason !== undefined) {
+        return
+      }
+
+      updatePetXP(context)
     })
   )
 
@@ -1022,12 +1028,12 @@ export function activate(context: vscode.ExtensionContext) {
     // Call the appropriate handler based on which view is active,
     // but they both update the same pet
     if (getConfigurationPosition() === 'panel' && CodachiState.panel) {
-      CodachiState.panel.onKeystroke();
+      CodachiState.panel.onKeystroke()
     } else if (
       getConfigurationPosition() === 'explorer' &&
       CodachiState.explorerView
     ) {
-      CodachiState.explorerView.onKeystroke();
+      CodachiState.explorerView.onKeystroke()
     }
   }
 }

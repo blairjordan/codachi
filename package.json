@@ -83,10 +83,10 @@
               "Explorer"
             ]
           },
-          "codachi.showXPCounter": {
+          "codachi.showXP": {
             "type": "boolean",
             "default": false,
-            "description": "Show XP counter in the top of the view"
+            "description": "Show XP bar in the top of the view"
           }
         }
       }
