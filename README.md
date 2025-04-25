@@ -2,14 +2,26 @@
 
 ![codachi logo](https://github.com/blairjordan/codachi/raw/main/media/codachi-logo.png)
 
-Adds cute monster pets to your workspace to encourage productivity.
+Codachi brings cute, animated monster pets to your workspace.
 
-These pets thrive off productivity. Write code to gain XP and level up!
+Watch them hatch from eggs, run around while you code, and evolve as they gain experience from your coding activity.
 
 ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/pegleg.codachi)
 ![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/Pegleg.codachi)
 ![Codachi Twitter](https://img.shields.io/twitter/url?label=codachi_monster&style=social&url=https%3A%2F%2Ftwitter.com%2Fcodachi_monster)
 ![Codachi Stars](https://img.shields.io/github/stars/blairjordan/codachi?style=social)
+
+## Screenshots
+
+### Panel Mode
+
+![VS Code Pet Example 1](https://github.com/blairjordan/codachi/raw/main/media/screenshot1.gif)
+
+![VS Code Pet Example 2](https://github.com/blairjordan/codachi/raw/main/media/screenshot2.gif)
+
+### Explorer Mode
+
+![VS Code Pet in Explorer](https://github.com/blairjordan/codachi/raw/main/media/screenshot3.gif)
 
 ## Features
 
@@ -66,14 +78,12 @@ You can switch between Panel and Explorer modes in two ways:
    - Use `Codachi: Show Panel` to switch to Panel mode
    - Use `Codachi: Open Explorer View` to switch to Explorer mode
 
-## Screenshots
+### Enabling the XP Bar
 
-### Panel Mode
+By default, the XP bar is hidden. To enable it:
 
-![VS Code Pet Example 1](https://github.com/blairjordan/codachi/raw/main/media/screenshot1.gif)
+   - Open VS Code Settings (`Ctrl` + `,`)
+   - Search for `codachi.showXP`
+   - Check the box to enable the XP bar
 
-![VS Code Pet Example 2](https://github.com/blairjordan/codachi/raw/main/media/screenshot2.gif)
-
-### Explorer Mode
-
-![VS Code Pet in Explorer](https://github.com/blairjordan/codachi/raw/main/media/screenshot3.gif)
+The XP counter will appear in the top left corner of your Codachi view, showing your current XP and the total XP needed to reach the next level.

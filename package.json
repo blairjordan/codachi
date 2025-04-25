@@ -7,7 +7,7 @@
     "url": "https://github.com/blairjordan/codachi"
   },
   "publisher": "pegleg",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "engines": {
     "vscode": "^1.64.0"
   },
@@ -29,7 +29,6 @@
   "license": "MIT",
   "activationEvents": [
     "*",
-    "onView:petsView",
     "onView:codachiView"
   ],
   "icon": "icon.png",
@@ -82,6 +81,11 @@
               "Panel",
               "Explorer"
             ]
+          },
+          "codachi.showXP": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show XP bar in the top of the view"
           }
         }
       }

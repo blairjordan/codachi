@@ -1,5 +1,6 @@
-import {
-  Direction,
+import { Direction } from './'
+
+import type {
   Gifs,
   Pet,
   PetAnimation,

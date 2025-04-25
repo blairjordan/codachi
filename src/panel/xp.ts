@@ -1,27 +1,27 @@
 export class Xp {
-  _periods: number
-  _msPerPeriod: number
-  _intervalId: NodeJS.Timeout | undefined = undefined
+  private _periods: number
+  private _msPerPeriod: number
+  private _intervalId: NodeJS.Timeout | undefined = undefined
 
-  _periodValues: number[] = []
-  _currentPeriodKeystrokes = 0
-  _velocity = 0
-  _multiplier = 0
+  private _periodValues: number[] = []
+  private _currentPeriodKeystrokes = 0
+  private _velocity = 0
+  private _multiplier = 0
 
-  getMultipler() {
+  getMultiplier(): number {
     return this._multiplier
   }
 
-  constructor(periods: number = 6, msPerPeriod: number = 10000) {
+  constructor(periods = 6, msPerPeriod = 10000) {
     this._periods = periods
     this._msPerPeriod = msPerPeriod
   }
 
-  onKeyPress() {
+  onKeyPress(): void {
     this._currentPeriodKeystrokes++
   }
 
-  startWatch() {
+  startWatch(): void {
     this._intervalId = setInterval(() => {
       if (this._periodValues.length >= this._periods) {
         this._periodValues.shift()
@@ -36,7 +36,7 @@ export class Xp {
     }, this._msPerPeriod)
   }
 
-  endWatch() {
+  endWatch(): void {
     if (this._intervalId) {
       clearInterval(this._intervalId)
     }

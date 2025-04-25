@@ -1,4 +1,5 @@
-import { Direction, NextFrameOpts, Transforms } from './'
+import { Direction } from './'
+import type { NextFrameOpts, Transforms } from './'
 
 export const transforms: Transforms = {
   idle: {
@@ -15,11 +16,12 @@ export const transforms: Transforms = {
       direction: oldDirection,
       speed,
       scale,
-    }: // offset,
-    NextFrameOpts) => {
+    }: NextFrameOpts) => {
       // Detect if we're in explorer view mode (set in extension.ts)
       const isExplorerView =
-        typeof window !== 'undefined' && (window as any).isExplorerView === true
+        typeof window !== 'undefined' &&
+        (window as Window & { isExplorerView?: boolean }).isExplorerView ===
+          true
 
       // Use different boundaries based on view type
       const rightMargin = isExplorerView ? 60 : 80
@@ -56,7 +58,8 @@ export const walking = (
 ): { leftPosition: number; direction: Direction } => {
   // Check if we're in explorer view mode
   const isExplorerView =
-    typeof window !== 'undefined' && (window as any).isExplorerView === true
+    typeof window !== 'undefined' &&
+    (window as Window & { isExplorerView?: boolean }).isExplorerView === true
 
   // Use different margins for explorer view
   const leftMargin = isExplorerView ? -15 : speed
@@ -74,7 +77,7 @@ export const walking = (
   }
 
   // Update position based on direction
-  let newLeftPosition
+  let newLeftPosition: number
   if (newDirection === Direction.right) {
     newLeftPosition = leftPosition + speed
   } else {

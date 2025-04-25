@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import path = require('path')
-import * as crypto from 'crypto'
+import path = require('node:path')
+import * as crypto from 'node:crypto'
 import * as vscode from 'vscode'
 import {
   adjustSpeedForScale,
@@ -10,8 +10,9 @@ import {
   petTypes,
   randomPetName,
   randomPetType,
-  UserPet,
 } from '../panel'
+
+import type { UserPet } from '../panel/types'
 
 // Define position type to avoid string comparison issues
 type Position = 'panel' | 'explorer'
@@ -19,36 +20,47 @@ type Position = 'panel' | 'explorer'
 /**
  * Global state for managing the single pet across views
  */
-class PetState {
-  // The single pet instance used throughout the extension
-  private static _pet: UserPet | undefined
+let _pet: UserPet | undefined
 
-  // A flag to track if we're in the middle of a view switch
-  private static _isViewSwitching = false
-
-  // Get the current pet, creating one if needed
-  static getPet(context: vscode.ExtensionContext): UserPet {
-    if (!this._pet) {
-      this._pet = this.loadFromStorage(context)
+/**
+ * Loads the pet state from storage.
+ */
+function loadFromStorage(context: vscode.ExtensionContext): UserPet {
+  const storedPets = context.globalState.get<UserPet[]>('pets', [])
+  return (
+    storedPets[0] || {
+      type: randomPetType(),
+      name: randomPetName(),
+      level: 0,
+      xp: 0,
+      state: 'idle',
+      scale: 1.0,
+      isTransitionIn: false,
     }
-    return this._pet
+  )
+}
+let _isViewSwitching = false
+
+/**
+ * Class to manage pet state
+ */
+
+// biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
+class PetState {
+  static getPet(context: vscode.ExtensionContext): UserPet {
+    if (!_pet) {
+      _pet = loadFromStorage(context)
+    }
+    return _pet
   }
 
-  // Save the current pet to storage
   static savePet(context: vscode.ExtensionContext): Thenable<void> {
-    if (this._pet) {
-      return context.globalState.update('pets', [this._pet])
+    if (_pet) {
+      return context.globalState.update('pets', [_pet])
     }
     return Promise.resolve()
   }
 
-  // Update the pet with a new state
-  static updatePet(pet: UserPet, context: vscode.ExtensionContext) {
-    this._pet = pet
-    return this.savePet(context)
-  }
-
-  // Create a new random pet
   static createNewPet(context: vscode.ExtensionContext): UserPet {
     const scaleFactor = vscode.workspace
       .getConfiguration()
@@ -60,52 +72,30 @@ class PetState {
     })
 
     pet.scale = scaleFactor
-    pet.isTransitionIn = true
+
+    // Only set the transition flag for eggs (level 0)
+    // This is important to prevent unwanted transitions
+    if (pet.level === 0) {
+      pet.isTransitionIn = true
+    } else {
+      pet.isTransitionIn = false
+    }
 
     if (pet.speed) {
       pet.originalSpeed = pet.speed
     }
 
-    this._pet = pet
-    this.savePet(context)
+    _pet = pet
+    PetState.savePet(context)
     return pet
   }
 
-  // Load pet from storage or create a new one
-  private static loadFromStorage(context: vscode.ExtensionContext): UserPet {
-    const storedPets = context.globalState.get('pets') as UserPet[] | undefined
-
-    if (!storedPets || storedPets.length === 0) {
-      return this.createNewPet(context)
-    }
-
-    const pet = storedPets[0] // Only supporting a single pet for now
-
-    // Ensure originalSpeed is set for stored pets
-    if (!pet.originalSpeed && pet.speed) {
-      pet.originalSpeed = pet.speed
-    }
-
-    // Apply current scale factor to existing pet
-    const scaleFactor = vscode.workspace
-      .getConfiguration()
-      .get('codachi.scaleFactor', 1.0)
-    pet.scale = scaleFactor
-
-    // Ensure transition flag is off for existing pets
-    pet.isTransitionIn = false
-
-    return pet
+  static setViewSwitching(isViewSwitching: boolean): void {
+    _isViewSwitching = isViewSwitching
   }
 
-  // Set flag when switching view modes
-  static setViewSwitching(isViewSwitching: boolean) {
-    this._isViewSwitching = isViewSwitching
-  }
-
-  // Check if we're in the middle of a view switch
   static isViewSwitching(): boolean {
-    return this._isViewSwitching
+    return _isViewSwitching
   }
 }
 
@@ -116,6 +106,15 @@ function getConfigurationPosition(): Position {
   return vscode.workspace
     .getConfiguration('codachi')
     .get<Position>('position', 'panel')
+}
+
+/**
+ * Returns whether to show the XP counter
+ */
+function shouldShowXP(): boolean {
+  return vscode.workspace
+    .getConfiguration('codachi')
+    .get<boolean>('showXP', false)
 }
 
 /**
@@ -148,9 +147,17 @@ class CodachiContentProvider {
    */
   onKeystroke() {
     const pet = PetState.getPet(this._context)
+
+    // For normal XP updates, we don't need transitions
+    pet.isTransitionIn = false
+
     pet.xp = pet.xp + 1
 
-    // Check less frequently for higher level pets
+    // Send real-time XP updates without triggering transitions
+    this.updateViews(pet, true)
+
+    PetState.savePet(this._context)
+
     const isEgg = pet.level === 0
     const checkFrequency = isEgg ? 1 : 10
 
@@ -161,8 +168,7 @@ class CodachiContentProvider {
     const previousLevel = pet.level
 
     // Special handling for egg hatching
-    if (isEgg && pet.xp >= 30) {
-      console.log(`Egg is hatching at ${pet.xp} XP`)
+    if (isEgg && pet.xp >= 35) {
       pet.level = 1
       pet.xp = 0
       pet.state = 'walking'
@@ -174,30 +180,36 @@ class CodachiContentProvider {
       const petTypeData = petTypes.get(pet.type)
       if (petTypeData) {
         const level1Data = petTypeData.levels.get(1)
-        if (level1Data && level1Data.animations[pet.state]) {
+        if (level1Data?.animations[pet.state]) {
           pet.speed = level1Data.animations[pet.state].speed || 0
           pet.originalSpeed = pet.speed
         }
       }
-    } else {
-      // Normal level mutation for non-egg levels
-      mutateLevel({ userPet: pet })
+
+      // Send a level change update (not an XP update)
+      this.updateViews(pet, false)
+      PetState.savePet(this._context)
+
+      // Show hatching notification
+      vscode.window.showInformationMessage(`${pet.name} has hatched!`)
+
+      // No need to continue since we've already handled this case
+      return
     }
+
+    // Normal level mutation for non-egg levels
+    mutateLevel({ userPet: pet })
 
     // Handle level changes
     if (pet.level !== previousLevel) {
-      console.log(`Pet evolved from level ${previousLevel} to ${pet.level}`)
-
       // Only set transition flag for actual evolution, not view switching
       if (!PetState.isViewSwitching()) {
         pet.isTransitionIn = true
+
+        // Send a level change update (not an XP update)
+        this.updateViews(pet, false)
+        PetState.savePet(this._context)
       }
-
-      // Save the updated pet state
-      PetState.savePet(this._context)
-
-      // Update both views with new state
-      this.updateViews(pet)
 
       // Show appropriate notification based on level change
       if (previousLevel === 0 && pet.level === 1) {
@@ -219,21 +231,19 @@ class CodachiContentProvider {
             }
           })
       }
-    } else {
-      // Save XP progress even if level didn't change
-      PetState.savePet(this._context)
     }
+    // No need for else block with savePet since we save on every keystroke
   }
 
   /**
    * Update all active views with the current pet state
    */
-  protected updateViews(pet: UserPet) {
+  public updateViews(pet: UserPet, isXPUpdate = true) {
     // Update panel view if it exists and is visible
     if (CodachiState.panel?.panel && getConfigurationPosition() === 'panel') {
       CodachiState.panel.panel.webview.postMessage({
         command: 'update-pet',
-        data: { userPet: pet },
+        data: { userPet: pet, isXPUpdate },
       })
     }
 
@@ -244,7 +254,7 @@ class CodachiContentProvider {
     ) {
       CodachiState.explorerView._view.webview.postMessage({
         command: 'update-pet',
-        data: { userPet: pet },
+        data: { userPet: pet, isXPUpdate },
       })
     }
   }
@@ -322,7 +332,15 @@ class CodachiContentProvider {
         }
       </style>
     `
-      : ''
+      : `
+      <style>
+        /* Panel styles */
+        body {
+          padding: 0;
+          margin: 0;
+        }
+      </style>
+      `
 
     return `<!DOCTYPE html>
     <html lang="en">
@@ -331,13 +349,63 @@ class CodachiContentProvider {
       <script nonce="${nonce}">var exports = {};</script>
       <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${
         webview.cspSource
-      }; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
+      } 'nonce-${nonce}'; img-src ${
+      webview.cspSource
+    } https:; script-src 'nonce-${nonce}';">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <link href="${stylesUri}" rel="stylesheet">
       <title>codachi</title>
       ${extraStyles}
+      <style nonce="${nonce}">
+        .xp-container {
+          position: fixed;
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          z-index: 9999;
+          background-color: rgba(0, 0, 0, 0.5);
+          padding: 8px;
+          border-radius: 5px;
+          display: block;
+        }
+        .xp-text {
+          color: white;
+          font-size: 12px;
+          margin-bottom: 4px;
+          font-weight: bold;
+        }
+        .xp-progress-bg {
+          width: 100%;
+          height: 10px;
+          background-color: rgba(100, 100, 100, 0.3);
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        .xp-progress-fill {
+          width: 50%;
+          height: 100%;
+          background-color: #0078D7;
+        }
+      </style>
     </head>
     <body>
+      <!-- XP bar with proper classes -->
+      <div class="xp-container">
+        <div class="xp-text">XP: 15 / 30</div>
+        <div class="xp-progress-bg">
+          <div class="xp-progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Fix service worker issue -->
+      <script nonce="${nonce}">
+        if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+          navigator.serviceWorker.register = function() {
+            return Promise.reject(new Error('Service workers are not supported in VS Code webviews'));
+          };
+        }
+      </script>
+
       <div id="container">
         <div id="movement-container">
           <div id="transition-container">
@@ -356,6 +424,61 @@ class CodachiContentProvider {
         codachiApp.app({ basePetUri: '${basePetUri}', userPet: ${JSON.stringify(
       pet
     )} });
+        
+        // Function to format numbers with K for thousands
+        function formatNumber(number) {
+          if (number < 1000) {
+            return number.toString();
+          } else if (number < 10000) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          } else {
+            return (number / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+          }
+        }
+        
+        // Function to update the XP bar
+        function updateXP(userPet) {
+          const xpContainer = document.querySelector('.xp-container');
+          const xpText = document.querySelector('.xp-text');
+          const xpProgressFill = document.querySelector('.xp-progress-fill');
+          
+          if (xpContainer && xpText && xpProgressFill) {
+            // Get the total XP required for the next level
+            let nextLevelXP = 35; // Default for eggs (level 0)
+            
+            if (window.codachiApp && window.codachiApp.petTypes) {
+              const petTypeData = window.codachiApp.petTypes.get(userPet.type);
+              if (petTypeData) {
+                const nextLevelData = petTypeData.levels.get(userPet.level + 1);
+                if (nextLevelData) {
+                  nextLevelXP = nextLevelData.xp;
+                }
+              }
+            }
+            
+            // Format both current XP and next level XP
+            const currentXP = userPet.xp || 0;
+            const formattedCurrentXP = formatNumber(currentXP);
+            const formattedNextLevelXP = formatNumber(nextLevelXP);
+            
+            // Calculate percentage for progress bar (clamped between 0-100%)
+            const percentage = Math.min(100, Math.max(0, (currentXP / nextLevelXP) * 100));
+            xpText.textContent = "XP: " + formattedCurrentXP + " / " + formattedNextLevelXP;
+            xpProgressFill.style.width = percentage + "%";
+            xpContainer.style.display = ${shouldShowXP()} ? 'block' : 'none';
+          }
+        }
+        
+        // Initial update
+        updateXP(${JSON.stringify(pet)});
+        
+        // Listen for pet updates to update the XP bar
+        window.addEventListener('message', (event) => {
+          const { command, data } = event.data;
+          if (command === 'update-pet' && data && data.userPet) {
+            updateXP(data.userPet);
+          }
+        });
       </script>
     </body>
     </html>`
@@ -374,10 +497,10 @@ class CodachiContentProvider {
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+      <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${nonce}'; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>codachi</title>
-      <style>
+      <style nonce="${nonce}">
         body {
           font-family: var(--vscode-font-family);
           color: var(--vscode-foreground);
@@ -398,6 +521,15 @@ class CodachiContentProvider {
       <p>You can change this setting by clicking <a href="#" id="settings-link">here</a>.</p>
       
       <script nonce="${nonce}">
+        // Disable service worker registration attempts to prevent errors in VS Code
+        if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+          navigator.serviceWorker.register = function() {
+            return Promise.reject(new Error('Service workers are not supported in VS Code webviews'));
+          };
+        }
+      </script>
+      
+      <script nonce="${nonce}">
         document.getElementById('settings-link').addEventListener('click', () => {
           const vscode = acquireVsCodeApi();
           vscode.postMessage({ command: 'open-settings' });
@@ -413,10 +545,6 @@ class CodachiContentProvider {
  */
 class PetPanel extends CodachiContentProvider {
   panel: vscode.WebviewPanel | undefined
-
-  constructor(context: vscode.ExtensionContext) {
-    super(context)
-  }
 
   /**
    * Update the pet's scale factor
@@ -540,9 +668,13 @@ class PetPanel extends CodachiContentProvider {
         pet.isTransitionIn = false
       }
 
+      // When updating content, we don't want to trigger transitions
+      // unless the pet was explicitly set to transition
+      const isXPUpdate = !pet.isTransitionIn
+
       this.panel.webview.postMessage({
         command: 'update-pet',
-        data: { userPet: pet },
+        data: { userPet: pet, isXPUpdate },
       })
     }
   }
@@ -557,10 +689,6 @@ class CodachiViewProvider
 {
   public static readonly viewType = 'codachiView'
   _view?: vscode.WebviewView
-
-  constructor(context: vscode.ExtensionContext) {
-    super(context)
-  }
 
   /**
    * Called when the view is first created
@@ -629,9 +757,13 @@ class CodachiViewProvider
         pet.isTransitionIn = false
       }
 
+      // When updating content, we don't want to trigger transitions
+      // unless the pet was explicitly set to transition
+      const isXPUpdate = !pet.isTransitionIn
+
       this._view.webview.postMessage({
         command: 'update-pet',
-        data: { userPet: pet },
+        data: { userPet: pet, isXPUpdate },
       })
     }
   }
@@ -640,9 +772,9 @@ class CodachiViewProvider
 /**
  * Global state to track view instances
  */
-class CodachiState {
-  static panel: PetPanel | undefined
-  static explorerView: CodachiViewProvider | undefined
+const CodachiState = {
+  panel: undefined as PetPanel | undefined,
+  explorerView: undefined as CodachiViewProvider | undefined,
 }
 
 /**
@@ -676,19 +808,6 @@ export function activate(context: vscode.ExtensionContext) {
     )
   )
 
-  // Register keystroke handler
-  vscode.commands.registerCommand('type', async (args) => {
-    if (getConfigurationPosition() === 'panel' && CodachiState.panel) {
-      CodachiState.panel.onKeystroke()
-    } else if (
-      getConfigurationPosition() === 'explorer' &&
-      CodachiState.explorerView
-    ) {
-      CodachiState.explorerView.onKeystroke()
-    }
-    return vscode.commands.executeCommand('default:type', args)
-  })
-
   // Register show panel command
   context.subscriptions.push(
     vscode.commands.registerCommand('codachi.showPanel', () => {
@@ -707,7 +826,7 @@ export function activate(context: vscode.ExtensionContext) {
           return
         }
 
-        if (CodachiState.panel && CodachiState.panel.panel) {
+        if (CodachiState.panel?.panel) {
           // Panel is already open, no need to create it
           resolve()
           return
@@ -746,6 +865,19 @@ export function activate(context: vscode.ExtensionContext) {
       function createNewPet() {
         // Create a new pet with the transition flag set
         const pet = PetState.createNewPet(context)
+
+        // Determine which content provider is active based on position
+        let activeProvider: CodachiContentProvider | undefined
+        if (position === 'panel' && CodachiState.panel) {
+          activeProvider = CodachiState.panel
+        } else if (position === 'explorer' && CodachiState.explorerView) {
+          activeProvider = CodachiState.explorerView
+        }
+
+        // Update the active view to reflect 0 XP immediately
+        if (activeProvider) {
+          activeProvider.updateViews(pet, false)
+        }
 
         // Update the active view based on current position
         if (position === 'panel' && CodachiState.panel?.panel) {
@@ -809,7 +941,10 @@ export function activate(context: vscode.ExtensionContext) {
   // Register panel serializer for restoring panel state
   if (vscode.window.registerWebviewPanelSerializer) {
     vscode.window.registerWebviewPanelSerializer('petPanel', {
-      async deserializeWebviewPanel(panel: vscode.WebviewPanel, _: any) {
+      async deserializeWebviewPanel(
+        panel: vscode.WebviewPanel,
+        _state: unknown
+      ) {
         CodachiState.panel = new PetPanel(context)
         CodachiState.panel.createPanel(panel)
       },
@@ -834,7 +969,6 @@ export function activate(context: vscode.ExtensionContext) {
           // Set view switching flag to prevent transition animations
           PetState.setViewSwitching(true)
 
-          // Update VS Code context
           updateExtensionPositionContext()
 
           // Update both views based on the new position
@@ -852,8 +986,19 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('workbench.view.explorer')
           }
 
-          // Clear the view switching flag
           PetState.setViewSwitching(false)
+        }
+
+        // Handle XP bar visibility changes
+        if (e.affectsConfiguration('codachi.showXP')) {
+          // Update both views to reflect the new setting
+          if (CodachiState.panel?.panel) {
+            CodachiState.panel.updateContent()
+          }
+
+          if (CodachiState.explorerView) {
+            CodachiState.explorerView.updateContent()
+          }
         }
       }
     )
@@ -863,6 +1008,34 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(updateExtensionPositionContext)
   )
+
+  // Register text document change handler for XP
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      if (event.contentChanges.length === 0) {
+        return
+      }
+      if (event.reason !== undefined) {
+        return
+      }
+
+      updatePetXP(context)
+    })
+  )
+
+  // Helper function to update pet XP regardless of which view is active
+  function updatePetXP(context: vscode.ExtensionContext) {
+    // Call the appropriate handler based on which view is active,
+    // but they both update the same pet
+    if (getConfigurationPosition() === 'panel' && CodachiState.panel) {
+      CodachiState.panel.onKeystroke()
+    } else if (
+      getConfigurationPosition() === 'explorer' &&
+      CodachiState.explorerView
+    ) {
+      CodachiState.explorerView.onKeystroke()
+    }
+  }
 }
 
 /**
