@@ -38,7 +38,7 @@ We have a few Codachi-inspired pet designs for Codex and ChatGPT in `media/dot/`
 
 ![Codachi-inspired Codex pet animation](media/dot/M1D1-all-states.gif)
 
-![Codachi-inspired bird Codex pet animation](media/dot/M5D1-all-states.gif)
+![Codachi-inspired bird Codex pet animation](media/dot/M5D1-hop.gif)
 
 To create a custom pet using one of these designs:
 
