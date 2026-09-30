@@ -36,21 +36,22 @@ Watch them hatch from eggs, run around while you code, and evolve as they gain e
 
 We have a few Codachi-inspired pet designs for Codex and ChatGPT in `media/dot/`.
 
-![Codachi-inspired Codex pet animation](media/dot/M1D1-all-states.gif)
+![Codachi-inspired Codex pet sprite sheet](media/dot/m1d1-dot-sprites.png)
 
-![Codachi-inspired bird Codex pet animation](media/dot/M5D1-hop.gif)
+![Codachi-inspired bird Codex pet sprite sheet](media/dot/m51d-dot-sprites.png)
 
-To create a custom pet using one of these designs:
+The original transparent PNG sprite sheets are included in `media/dot/`:
 
-1. Download its GIF from `media/dot/`, or use the local file in a clone of this repository.
-2. In the ChatGPT desktop app, open **Settings > Pets > Create pet**.
-3. In the new chat, provide the animation as a reference and describe the pet you want. For example:
+- Blue monster: `m1d1-dot-sprites.png`
+- Bird: `m51d-dot-sprites.png`
 
-   > Create a custom pet based on this Codachi-inspired animation. Preserve its pixel-art style, colors, and animations.
+To use a design, download its PNG and provide it to your custom-pet setup workflow. In the ChatGPT desktop app, start from **Settings > Pets > Create pet** and provide the sprite sheet with a request such as:
 
-4. Once creation finishes, return to **Settings > Pets**, select **Refresh**, and choose your new pet. Enter `/pet` to show it.
+> Set up this existing sprite sheet as my custom pet. Preserve the supplied artwork and animation frames.
 
-These GIFs are animation references. The web app's **Upload pet** feature requires a transparent PNG or WebP sprite sheet, so the GIFs cannot be uploaded there directly.
+Once setup finishes, return to **Settings > Pets**, select **Refresh**, and choose your pet. Enter `/pet` to show it.
+
+Both supplied sheets are 1536 × 2288 pixels. The documented web **Upload pet** format is 1536 × 1872, so these originals need format adaptation before that upload workflow; direct import of these sheets has not been verified.
 
 In Codex CLI, use `/pets` to choose a compatible installed pet in a supported terminal.
 
