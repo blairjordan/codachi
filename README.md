@@ -36,11 +36,11 @@ Watch them hatch from eggs, run around while you code, and evolve as they gain e
 
 We have a few Codachi-inspired pet designs for Codex and ChatGPT in `media/dot/`.
 
-![Codachi-inspired Codex pet sprite sheet](media/dot/m1d1-dot-sprites.png)
+![Codachi-inspired blue monster pet preview](media/dot/blue-monster-preview.gif)
 
-![Codachi-inspired bird Codex pet sprite sheet](media/dot/m51d-dot-sprites.png)
+![Codachi-inspired bird pet preview](media/dot/bird-preview.gif)
 
-The original transparent PNG sprite sheets are included in `media/dot/`:
+The GIFs above are previews. Use the original transparent PNG sprite sheets in `media/dot/` to set up your pet:
 
 - Blue monster: `m1d1-dot-sprites.png`
 - Bird: `m51d-dot-sprites.png`
