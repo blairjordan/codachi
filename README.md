@@ -32,6 +32,33 @@ Watch them hatch from eggs, run around while you code, and evolve as they gain e
 
 ## Getting Started
 
+### Codachi-Inspired Codex Pets
+
+We have a few Codachi-inspired pet designs for Codex and ChatGPT in `media/dot/`.
+
+![Codachi-inspired blue monster pet preview](media/dot/blue-monster-preview.gif)
+
+![Codachi-inspired bird pet preview](media/dot/bird-preview.gif)
+
+The GIFs above are previews. Use the original transparent PNG sprite sheets in `media/dot/` to set up your pet:
+
+- Blue monster: `m1d1-dot-sprites.png`
+- Bird: `m51d-dot-sprites.png`
+
+To use a design, download its PNG and provide it to your custom-pet setup workflow. In the ChatGPT desktop app, start from **Settings > Pets > Create pet** and provide the sprite sheet with a request such as:
+
+> Set up this existing sprite sheet as my custom pet. Preserve the supplied artwork and animation frames.
+
+Once setup finishes, return to **Settings > Pets**, select **Refresh**, and choose your pet. Enter `/pet` to show it.
+
+Both supplied sheets are 1536 × 2288 pixels. The documented web **Upload pet** format is 1536 × 1872, so these originals need format adaptation before that upload workflow; direct import of these sheets has not been verified.
+
+In Codex CLI, use `/pets` to choose a compatible installed pet in a supported terminal.
+
+Official pet setup and terminal requirements:
+
+https://learn.chatgpt.com/docs/pets
+
 ### Panel Mode (Default)
 
 Launch VS Code Quick Open (`Ctrl` + `Shift` + `P`), paste the following command, and press Enter.
