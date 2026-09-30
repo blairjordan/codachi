@@ -32,17 +32,29 @@ Watch them hatch from eggs, run around while you code, and evolve as they gain e
 
 ## Getting Started
 
-### Codachi-Inspired Codex Characters
+### Codachi-Inspired Codex Pets
 
-We have a few Codachi-inspired characters available for your Codex Dot in `media/dot/`.
+We have a few Codachi-inspired pet designs for Codex and ChatGPT in `media/dot/`.
 
-![Codachi-inspired Codex character animation](media/dot/M1D1-all-states.gif)
+![Codachi-inspired Codex pet animation](media/dot/M1D1-all-states.gif)
 
-To use one as a reference for your custom Codex Dot character, download its GIF from `media/dot/` (or use the local file in a clone of this repository) and attach it when creating your character. For example:
+To create a custom pet using one of these designs:
 
-> Use this Codachi-inspired animation as the reference for my Codex Dot character. Preserve its pixel-art style, colors, and animations.
+1. Download its GIF from `media/dot/`, or use the local file in a clone of this repository.
+2. In the ChatGPT desktop app, open **Settings > Pets > Create pet**.
+3. In the new chat, provide the animation as a reference and describe the pet you want. For example:
 
-Direct installation instructions are pending verification of the required character package and import workflow; this GIF alone has not been verified as an installable Dot character.
+   > Create a custom pet based on this Codachi-inspired animation. Preserve its pixel-art style, colors, and animations.
+
+4. Once creation finishes, return to **Settings > Pets**, select **Refresh**, and choose your new pet. Enter `/pet` to show it.
+
+These GIFs are animation references. The web app's **Upload pet** feature requires a transparent PNG or WebP sprite sheet, so the GIFs cannot be uploaded there directly.
+
+In Codex CLI, use `/pets` to choose a compatible installed pet in a supported terminal.
+
+Official pet setup and terminal requirements:
+
+https://learn.chatgpt.com/docs/pets
 
 ### Panel Mode (Default)
 
