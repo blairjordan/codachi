@@ -32,6 +32,18 @@ Watch them hatch from eggs, run around while you code, and evolve as they gain e
 
 ## Getting Started
 
+### Codex Dot Character
+
+M1D1's all-states animation is available in `media/dot/M1D1-all-states.gif`.
+
+![M1D1 Codex Dot character animation](media/dot/M1D1-all-states.gif)
+
+To use M1D1 as a reference for your custom Codex Dot character, download the GIF from `media/dot/` (or use the local file in a clone of this repository) and attach it when creating your character. For example:
+
+> Use this M1D1 animation as the reference for my Codex Dot character. Preserve his pixel-art style, colors, and animations.
+
+Direct installation instructions are pending verification of the required character package and import workflow; this GIF alone has not been verified as an installable Dot character.
+
 ### Panel Mode (Default)
 
 Launch VS Code Quick Open (`Ctrl` + `Shift` + `P`), paste the following command, and press Enter.
